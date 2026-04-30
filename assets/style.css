@@ -1,0 +1,14 @@
+body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; }
+.container { max-width: 980px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+input, textarea, select, button { width: 100%; margin: 6px 0; padding: 10px; box-sizing: border-box; }
+button { background: #2563eb; color: #fff; border: none; cursor: pointer; border-radius: 4px; }
+button:hover { background: #1e40af; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.grid { display: grid; gap: 18px; }
+.two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+.msg { min-height: 20px; font-size: 13px; margin-top: 4px; }
+.msg.success { color: #166534; }
+.msg.error { color: #b91c1c; }
+pre { background: #111827; color: #d1fae5; padding: 12px; white-space: pre-wrap; }
+@media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }

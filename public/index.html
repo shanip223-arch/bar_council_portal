@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Bar Council Portal</title>
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <div class="container">
+    <h1>Bar Council Certificate Portal</h1>
+    <div class="grid two-col">
+      <section class="card">
+        <h2>Candidate Login</h2>
+        <input id="candApp" placeholder="Application No (UP12345/25)"/>
+        <button id="reqOtpBtn" onclick="requestCandidateOtp()">Request OTP</button>
+        <div id="candOtpMsg" class="msg"></div>
+        <input id="candOtp" placeholder="Enter OTP (6 digits)"/>
+        <button id="verifyOtpBtn" onclick="verifyCandidateOtp()">Verify OTP</button>
+        <div id="candVerifyMsg" class="msg"></div>
+      </section>
+      <section class="card">
+        <h2>Admin/Staff Login</h2>
+        <input id="user" placeholder="Username"/>
+        <input id="pass" type="password" placeholder="Password"/>
+        <button id="userLoginBtn" onclick="loginUser()">Login</button>
+        <div id="userLoginMsg" class="msg"></div>
+      </section>
+    </div>
+    <p><a href="/duplicate">Apply for Duplicate Certificate</a></p>
+  </div>
+  <script src="/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Candidate Dashboard</title>
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+<div class="container">
+  <h1>Candidate Dashboard</h1>
+  <button onclick="loadStatus()">Refresh Status</button>
+  <pre id="statusBox"></pre>
+
+  <h3>Upload Objection File</h3>
+  <input id="objId" placeholder="Objection ID"/>
+  <input id="docType" placeholder="Document type"/>
+  <input id="objFile" type="file"/>
+  <button onclick="uploadObjectionDoc()">Upload</button>
+
+  <h3>Download Certificate</h3>
+  <input id="dlAppNo" placeholder="Application No"/>
+  <button onclick="requestDownloadOtp()">Request Download OTP</button>
+  <input id="dlOtp" placeholder="OTP"/>
+  <button onclick="downloadCertificate()">Download</button>
+  <button onclick="payUnlock()">Mock Pay Unlock (24h)</button>
+</div>
+<script src="/assets/app.js"></script>
+</body>
+</html>

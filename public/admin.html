@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+<div class="container">
+  <h1>Admin / Staff Panel</h1>
+
+  <h3>Excel Data Upload (Admin)</h3>
+  <input type="file" id="excelFile"/>
+  <button onclick="uploadExcel()">Upload Excel</button>
+
+  <h3>Add Objection (Staff/Admin)</h3>
+  <input id="obApp" placeholder="Application No"/>
+  <input id="obType" placeholder="Type"/>
+  <input id="obRemark" placeholder="Remark"/>
+  <button onclick="addObjection()">Add Objection</button>
+
+  <h3>Verify Upload</h3>
+  <input id="verifyUploadId" placeholder="Upload ID"/>
+  <button onclick="verifyUpload()">Verify</button>
+
+  <h3>Upload Certificate (Admin)</h3>
+  <input id="certAppNo" placeholder="Application No"/>
+  <input type="file" id="certFile"/>
+  <button onclick="uploadCertificate()">Upload Certificate</button>
+
+  <h3>Admin Override</h3>
+  <input id="ovAppNo" placeholder="Application No"/>
+  <select id="ovEnabled"><option value="1">Enable Uploads</option><option value="0">Disable Uploads</option></select>
+  <select id="ovChance"><option value="1">Grant Final Chance</option><option value="0">No Reset</option></select>
+  <button onclick="overrideUpload()">Apply Override</button>
+
+  <h3>Backup / Restore</h3>
+  <select id="backupType"><option>objection</option><option>upload</option><option>full</option></select>
+  <button onclick="runBackup()">Run Backup</button>
+  <input id="restorePath" placeholder="backup file path"/>
+  <button onclick="restoreBackup()">Restore</button>
+
+  <h3>Approve Duplicate</h3>
+  <input id="dupId" placeholder="Request ID"/>
+  <select id="dupCode"><option>D1</option><option>D2</option></select>
+  <button onclick="approveDuplicate()">Approve</button>
+
+  <pre id="adminOut"></pre>
+</div>
+<script src="/assets/app.js"></script>
+</body>
+</html>
