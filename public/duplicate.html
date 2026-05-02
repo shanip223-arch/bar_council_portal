@@ -1,19 +1,218 @@
 <!doctype html>
-<html>
+<html lang="hi">
 <head>
   <meta charset="utf-8"/>
-  <title>Duplicate Certificate Request</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>डुप्लीकेट प्रमाण पत्र – UP Bar Council Portal</title>
   <link rel="stylesheet" href="/assets/style.css"/>
 </head>
 <body>
-<div class="container">
-  <h1>Duplicate Certificate Form</h1>
-  <input id="dupAppNo" placeholder="Application No"/>
-  <textarea id="dupReason" placeholder="Reason"></textarea>
-  <input id="dupPhoto" type="file"/>
-  <button onclick="submitDuplicate()">Submit</button>
-  <pre id="dupOut"></pre>
+
+<div class="tricolor-bar">
+  <div class="t-saffron"></div><div class="t-white"></div><div class="t-green"></div>
 </div>
+
+<div class="access-bar">
+  <span>🇮🇳 उत्तर प्रदेश बार काउंसिल | Advocate Certificate Portal</span>
+</div>
+
+<div class="gov-header">
+  <div class="gov-emblem">⚖️</div>
+  <div class="gov-titles">
+    <div class="hi">उत्तर प्रदेश बार काउंसिल</div>
+    <div class="en">Uttar Pradesh Bar Council</div>
+    <div class="sub">डुप्लीकेट प्रमाण पत्र आवेदन | Duplicate Certificate Application</div>
+  </div>
+  <div class="gov-right-logo">
+    <div class="seal">🏛️</div>
+    <div class="seal-text">उत्तर प्रदेश</div>
+  </div>
+</div>
+
+<div class="notice-bar">
+  <span class="notice-label">📢 सूचना</span>
+  <marquee behavior="scroll" direction="left" scrollamount="3">
+    ✦ डुप्लीकेट प्रमाण पत्र के लिए पासपोर्ट आकार का फोटो अनिवार्य है | Passport size photo mandatory for duplicate certificate &nbsp;|&nbsp;
+    ✦ आवेदन के बाद कार्यालय द्वारा सत्यापन किया जाएगा | After submission, office verification will be done &nbsp;&nbsp;&nbsp;
+  </marquee>
+</div>
+
+<nav class="navbar">
+  <a href="/" class="nav-item home">🏠 होम</a>
+  <a href="/duplicate" class="nav-item active">📋 डुप्लीकेट प्रमाणपत्र</a>
+  <span class="nav-spacer"></span>
+</nav>
+
+<div class="breadcrumb">
+  <span>🏠</span> <a href="/">होम</a>
+  <span class="sep">›</span> <span>डुप्लीकेट प्रमाण पत्र आवेदन | Duplicate Certificate Application</span>
+</div>
+
+<main id="main">
+<div class="main-wrap" style="max-width:820px;">
+
+  <div style="margin-bottom:20px;">
+    <h2 style="font-size:18px; color:var(--navy2); font-weight:700;">📋 डुप्लीकेट प्रमाण पत्र आवेदन</h2>
+    <p style="font-size:13px; color:#666; margin-top:4px;">Duplicate Advocate Certificate Application Form</p>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions" style="margin-bottom:20px;">
+    <h4>📌 महत्वपूर्ण निर्देश | Important Instructions</h4>
+    <ol>
+      <li>यह फॉर्म केवल उन अभ्यर्थियों के लिए है जिनका मूल प्रमाण पत्र खो गया हो या नष्ट हो गया हो।</li>
+      <li>This form is only for candidates whose original certificate is lost or damaged.</li>
+      <li>पासपोर्ट साइज़ फोटो (JPG/PNG, अधिकतम 2 MB) अनिवार्य है | Passport size photo mandatory (JPG/PNG, max 2MB).</li>
+      <li>आवेदन संख्या सही प्रारूप (UP12345/25) में दर्ज करें | Enter application no in correct format.</li>
+      <li>आवेदन प्रस्तुत करने के बाद कार्यालय द्वारा सत्यापन किया जाएगा | Office will verify after submission.</li>
+      <li>अनुमोदन के बाद आपको आवंटन कोड प्राप्त होगा | After approval you will receive issue code.</li>
+    </ol>
+  </div>
+
+  <!-- Form Card -->
+  <div class="panel">
+    <div class="sec-head">📝 आवेदन फॉर्म | Application Form</div>
+    <div class="panel-body">
+
+      <div style="background:#eef2fb; border:1px solid #c8d4e8; border-radius:4px; padding:10px 14px; margin-bottom:18px; font-size:12px; color:#334;">
+        <strong>⚠️ नोट:</strong> सभी <span style="color:red;">*</span> से चिह्नित फील्ड अनिवार्य हैं | All fields marked <span style="color:red;">*</span> are mandatory.
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dupAppNo">आवेदन संख्या <span class="required">*</span> <span style="font-weight:400;color:#888;">(Application No)</span></label>
+        <input class="form-input" id="dupAppNo" placeholder="जैसे: UP12345/25" maxlength="10" autocomplete="off"/>
+        <div class="form-hint">प्रारूप: UP##### /YY &nbsp;|&nbsp; Format: UP00001/25</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dupReason">डुप्लीकेट का कारण <span class="required">*</span> <span style="font-weight:400;color:#888;">(Reason for Duplicate)</span></label>
+        <select class="form-select" id="dupReasonType" style="margin-bottom:8px;" onchange="onReasonTypeChange()">
+          <option value="">— कारण चुनें | Select Reason —</option>
+          <option value="lost">प्रमाण पत्र खो गया | Certificate Lost</option>
+          <option value="damaged">प्रमाण पत्र नष्ट / क्षतिग्रस्त | Certificate Damaged/Destroyed</option>
+          <option value="stolen">प्रमाण पत्र चोरी हुआ | Certificate Stolen</option>
+          <option value="other">अन्य कारण | Other Reason</option>
+        </select>
+        <textarea class="form-textarea" id="dupReason" placeholder="विस्तृत कारण लिखें... | Describe the reason in detail..." rows="3"></textarea>
+        <div class="form-hint">न्यूनतम 20 अक्षर | Minimum 20 characters</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dupPhoto">पासपोर्ट साइज़ फोटो <span class="required">*</span> <span style="font-weight:400;color:#888;">(Passport Size Photo)</span></label>
+        <input class="file-input" id="dupPhoto" type="file" accept=".jpg,.jpeg,.png" onchange="previewPhoto(this)"/>
+        <div class="form-hint">केवल JPG/PNG | Only JPG/PNG | अधिकतम 2 MB | Max 2MB</div>
+        <div id="photoPreviewWrap" style="margin-top:10px; display:none;">
+          <img id="photoPreview" style="width:80px; height:100px; object-fit:cover; border:2px solid var(--border); border-radius:3px;" alt="Preview"/>
+          <div style="font-size:11px; color:#888; margin-top:4px;">फोटो प्रीव्यू | Photo Preview</div>
+        </div>
+      </div>
+
+      <!-- Declaration -->
+      <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:4px; padding:12px 14px; margin: 16px 0; font-size:12.5px; color:#5a4000;">
+        <strong>📜 घोषणा | Declaration:</strong><br>
+        मैं घोषणा करता/करती हूँ कि उपरोक्त जानकारी सत्य एवं सही है।
+        I hereby declare that the information provided above is true and correct to the best of my knowledge.
+        कोई भी गलत जानकारी देने पर कानूनी कार्रवाई की जा सकती है। Any false information may lead to legal action.
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+        <input type="checkbox" id="declareCheck" style="width:16px; height:16px; cursor:pointer;"/>
+        <label for="declareCheck" style="font-size:13px; cursor:pointer; font-weight:600;">
+          मैं उपरोक्त घोषणा से सहमत हूँ | I agree to the above declaration <span class="required">*</span>
+        </label>
+      </div>
+
+      <div id="dupOut" class="msg" style="margin-bottom:12px;"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-lg" onclick="submitDuplicateForm()" id="dupSubmitBtn">
+          📨 आवेदन प्रस्तुत करें | Submit Application
+        </button>
+        <a href="/" class="btn btn-outline btn-lg">← वापस जायें | Go Back</a>
+      </div>
+
+    </div>
+    <div class="panel-footer">
+      आवेदन प्रस्तुत करने के बाद कार्यालय द्वारा 5–7 कार्य दिवसों में सत्यापन किया जाएगा।
+      After submission, verification will be done by office within 5–7 working days.
+    </div>
+  </div>
+
+</div>
+</main>
+
+<footer class="gov-footer">
+  <div class="footer-bottom">
+    <span>© 2025 उत्तर प्रदेश बार काउंसिल | All Rights Reserved | NIC</span>
+    <span><a href="#">गोपनीयता नीति</a> | <a href="#">अस्वीकरण</a></span>
+  </div>
+</footer>
+
 <script src="/assets/app.js"></script>
+<script>
+function onReasonTypeChange() {
+  const v = document.getElementById('dupReasonType').value;
+  const map = {
+    lost:'प्रमाण पत्र खो जाने के कारण डुप्लीकेट की आवश्यकता है।',
+    damaged:'प्रमाण पत्र क्षतिग्रस्त/नष्ट होने के कारण डुप्लीकेट की आवश्यकता है।',
+    stolen:'प्रमाण पत्र चोरी होने के कारण डुप्लीकेट की आवश्यकता है।'
+  };
+  if (map[v]) document.getElementById('dupReason').value = map[v];
+}
+
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('photoPreview').src = e.target.result;
+      document.getElementById('photoPreviewWrap').style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+async function submitDuplicateForm() {
+  const appNo = document.getElementById('dupAppNo').value.trim();
+  const reason = document.getElementById('dupReason').value.trim();
+  const photo = document.getElementById('dupPhoto').files[0];
+  const agreed = document.getElementById('declareCheck').checked;
+
+  if (!appNo || !/^UP\d{5}\/\d{2}$/.test(appNo)) {
+    setMsg('dupOut', '❌ आवेदन संख्या अमान्य है। प्रारूप: UP12345/25 | Invalid application no.', 'error'); return;
+  }
+  if (!reason || reason.length < 20) {
+    setMsg('dupOut', '❌ कारण कम से कम 20 अक्षरों का होना चाहिए | Reason must be at least 20 characters.', 'error'); return;
+  }
+  if (!photo) {
+    setMsg('dupOut', '❌ पासपोर्ट फोटो अनिवार्य है | Passport photo is required.', 'error'); return;
+  }
+  if (!agreed) {
+    setMsg('dupOut', '❌ कृपया घोषणा से सहमत हों | Please agree to the declaration.', 'error'); return;
+  }
+
+  const btn = document.getElementById('dupSubmitBtn');
+  btn.disabled = true; btn.textContent = 'प्रस्तुत हो रहा है…';
+
+  try {
+    const form = new FormData();
+    form.append('application_no', appNo);
+    form.append('reason', reason);
+    form.append('photo', photo);
+    const r = await fetch('/api/certificate/duplicate-request', { method:'POST', body: form });
+    const d = await parseResponse(r);
+    setMsg('dupOut', '✅ ' + (d.message || 'आवेदन सफलतापूर्वक प्रस्तुत किया गया | Application submitted successfully.'), 'success');
+    document.getElementById('dupAppNo').value = '';
+    document.getElementById('dupReason').value = '';
+    document.getElementById('dupPhoto').value = '';
+    document.getElementById('dupReasonType').value = '';
+    document.getElementById('declareCheck').checked = false;
+    document.getElementById('photoPreviewWrap').style.display = 'none';
+  } catch(e) {
+    setMsg('dupOut', '❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📨 आवेदन प्रस्तुत करें | Submit Application';
+  }
+}
+</script>
 </body>
 </html>

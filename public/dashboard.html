@@ -1,29 +1,298 @@
 <!doctype html>
-<html>
+<html lang="hi">
 <head>
   <meta charset="utf-8"/>
-  <title>Candidate Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>अभ्यर्थी डैशबोर्ड – UP Bar Council Portal</title>
   <link rel="stylesheet" href="/assets/style.css"/>
 </head>
 <body>
-<div class="container">
-  <h1>Candidate Dashboard</h1>
-  <button onclick="loadStatus()">Refresh Status</button>
-  <pre id="statusBox"></pre>
 
-  <h3>Upload Objection File</h3>
-  <input id="objId" placeholder="Objection ID"/>
-  <input id="docType" placeholder="Document type"/>
-  <input id="objFile" type="file"/>
-  <button onclick="uploadObjectionDoc()">Upload</button>
-
-  <h3>Download Certificate</h3>
-  <input id="dlAppNo" placeholder="Application No"/>
-  <button onclick="requestDownloadOtp()">Request Download OTP</button>
-  <input id="dlOtp" placeholder="OTP"/>
-  <button onclick="downloadCertificate()">Download</button>
-  <button onclick="payUnlock()">Mock Pay Unlock (24h)</button>
+<div class="tricolor-bar">
+  <div class="t-saffron"></div><div class="t-white"></div><div class="t-green"></div>
 </div>
+
+<div class="access-bar">
+  <span>🇮🇳 उत्तर प्रदेश बार काउंसिल | Advocate Certificate Portal</span>
+  <span id="navUser" style="color:var(--navy); font-weight:700;"></span>
+</div>
+
+<div class="gov-header">
+  <div class="gov-emblem">⚖️</div>
+  <div class="gov-titles">
+    <div class="hi">उत्तर प्रदेश बार काउंसिल</div>
+    <div class="en">Uttar Pradesh Bar Council – Candidate Dashboard</div>
+    <div class="sub">अभ्यर्थी डैशबोर्ड | Candidate Dashboard</div>
+  </div>
+  <div class="gov-right-logo">
+    <div class="seal">🏛️</div>
+    <div class="seal-text">उत्तर प्रदेश</div>
+  </div>
+</div>
+
+<div class="notice-bar">
+  <span class="notice-label">📢 सूचना</span>
+  <marquee behavior="scroll" direction="left" scrollamount="3">
+    ✦ आपत्ति दस्तावेज़ निर्धारित समय सीमा से पहले अपलोड करें | Upload objection documents before the deadline &nbsp;|&nbsp;
+    ✦ 2 निःशुल्क डाउनलोड के बाद मॉक भुगतान आवश्यक | After 2 free downloads mock payment required &nbsp;|&nbsp;
+    ✦ OTP की वैधता 5 मिनट है | OTP valid for 5 minutes &nbsp;&nbsp;&nbsp;
+  </marquee>
+</div>
+
+<nav class="navbar">
+  <a href="/" class="nav-item home">🏠 होम</a>
+  <a href="/dashboard" class="nav-item active">📊 डैशबोर्ड</a>
+  <a href="/duplicate" class="nav-item">📋 डुप्लीकेट</a>
+  <span class="nav-spacer"></span>
+  <button class="nav-logout" onclick="logout()">🚪 लॉगआउट | Logout</button>
+</nav>
+
+<div class="breadcrumb">
+  <span>🏠</span> <a href="/">होम</a>
+  <span class="sep">›</span> <span>अभ्यर्थी डैशबोर्ड | Candidate Dashboard</span>
+</div>
+
+<main id="main">
+<div class="main-wrap">
+
+  <!-- Top action bar -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h2 style="font-size:18px; color:var(--navy2); font-weight:700;">अभ्यर्थी डैशबोर्ड | Candidate Dashboard</h2>
+      <p style="font-size:12px; color:#777; margin-top:2px;">अपनी आवेदन स्थिति और प्रमाण पत्र यहाँ देखें।</p>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 स्थिति अपडेट करें | Refresh</button>
+  </div>
+
+  <!-- Status Banner (filled by JS) -->
+  <div id="statusBanner" class="app-status-banner asb-pending" style="display:none;">
+    <div class="asb-icon" id="statusIcon">⏳</div>
+    <div>
+      <div class="asb-title" id="statusTitle">आवेदन लंबित है | Application Pending</div>
+      <div class="asb-sub" id="statusSub"></div>
+    </div>
+    <div style="margin-left:auto;">
+      <span class="badge" id="statusBadge">pending</span>
+    </div>
+  </div>
+
+  <div class="sidebar-layout">
+
+    <!-- LEFT: Application Info -->
+    <div>
+      <!-- Applicant Card -->
+      <div class="panel">
+        <div class="sec-head">👤 आवेदक विवरण | Applicant Details</div>
+        <div class="panel-body" style="padding:0;">
+          <table class="status-table" id="appInfoTable">
+            <tr><td>आवेदन संख्या</td><td id="di_appno">—</td></tr>
+            <tr><td>नाम | Name</td><td id="di_name">—</td></tr>
+            <tr><td>स्थिति | Status</td><td id="di_status">—</td></tr>
+            <tr><td>अपलोड सक्रिय</td><td id="di_upload">—</td></tr>
+            <tr><td>प्रमाण पत्र</td><td id="di_cert">—</td></tr>
+          </table>
+        </div>
+        <div class="panel-footer">
+          <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 ताज़ा करें | Refresh Status</button>
+        </div>
+      </div>
+
+      <!-- Download Certificate -->
+      <div class="panel">
+        <div class="sec-head">📥 प्रमाण पत्र डाउनलोड | Certificate Download</div>
+        <div class="panel-body">
+          <div class="instructions" style="margin-bottom:14px;">
+            <h4>📌 निर्देश | Instructions</h4>
+            <ul>
+              <li>2 निःशुल्क डाउनलोड उपलब्ध हैं | 2 free downloads available.</li>
+              <li>उसके बाद मॉक भुगतान करें (24 घंटे unlock) | After that do mock payment (24h unlock).</li>
+              <li>OTP आपके मोबाइल पर आएगा | OTP sent to your mobile.</li>
+            </ul>
+          </div>
+          <div class="form-group">
+            <label class="form-label">आवेदन संख्या <span class="required">*</span></label>
+            <input class="form-input" id="dlAppNo" placeholder="UP12345/25"/>
+          </div>
+          <button class="btn btn-outline btn-full" style="margin-bottom:10px;" onclick="requestDownloadOtp()">
+            📤 OTP भेजें | Request Download OTP
+          </button>
+          <div class="form-group">
+            <label class="form-label">OTP <span class="required">*</span></label>
+            <input class="form-input" id="dlOtp" placeholder="6 अंकों का OTP | 6-digit OTP" maxlength="6" inputmode="numeric"/>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="downloadCertificate()" style="flex:1;">⬇️ डाउनलोड | Download</button>
+            <button class="btn btn-outline" onclick="payUnlock()" style="flex:1;">💳 मॉक भुगतान | Mock Pay</button>
+          </div>
+          <div id="dlMsg" class="msg" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Objections & Upload -->
+    <div>
+
+      <!-- Objections List -->
+      <div class="panel">
+        <div class="sec-head">⚠️ आपत्तियाँ | Objections <span id="objCount" style="font-weight:400; font-size:12px; margin-left:6px;"></span></div>
+        <div class="panel-body">
+          <div id="objList">
+            <div style="text-align:center; color:#aaa; padding:20px; font-size:13px;">
+              ↑ स्थिति अपडेट करें | Refresh status to load
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Objection Doc -->
+      <div class="panel">
+        <div class="sec-head">📤 आपत्ति दस्तावेज़ अपलोड | Upload Objection Document</div>
+        <div class="panel-body">
+
+          <div class="instructions" style="margin-bottom:14px;">
+            <h4>📌 अपलोड निर्देश</h4>
+            <ul>
+              <li>केवल PDF/JPG/PNG फ़ाइलें स्वीकार्य हैं। Max 5 MB.</li>
+              <li>आपत्ति ID आपत्ति सूची से प्राप्त करें।</li>
+              <li>Only PDF/JPG/PNG accepted. Max 5MB per file.</li>
+            </ul>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">आपत्ति ID <span class="required">*</span> <span style="font-weight:400;color:#888;">(Objection ID)</span></label>
+            <input class="form-input" id="objId" placeholder="जैसे: 1, 2, 3"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">दस्तावेज़ प्रकार <span class="required">*</span> <span style="font-weight:400;color:#888;">(Document Type)</span></label>
+            <select class="form-select" id="docType">
+              <option value="reply">उत्तर / Reply</option>
+              <option value="affidavit">शपथपत्र / Affidavit</option>
+              <option value="certificate">प्रमाण पत्र / Certificate</option>
+              <option value="other">अन्य / Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">फ़ाइल चुनें <span class="required">*</span> <span style="font-weight:400;color:#888;">(Select File)</span></label>
+            <input class="file-input" id="objFile" type="file" accept=".pdf,.jpg,.jpeg,.png"/>
+          </div>
+          <div id="uploadMsg" class="msg"></div>
+          <button class="btn btn-saffron btn-full" id="uploadBtn" onclick="doUploadDoc()">
+            📤 दस्तावेज़ अपलोड करें | Upload Document
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /sidebar-layout -->
+</div>
+</main>
+
+<footer class="gov-footer">
+  <div class="footer-bottom">
+    <span>© 2025 उत्तर प्रदेश बार काउंसिल | All Rights Reserved | NIC</span>
+    <span><a href="#">गोपनीयता नीति</a> | <a href="#">अस्वीकरण</a></span>
+  </div>
+</footer>
+
 <script src="/assets/app.js"></script>
+<script>
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = '/';
+}
+
+function showStatus(data) {
+  const banner = document.getElementById('statusBanner');
+  banner.style.display = 'flex';
+  const map = {
+    pending:      { cls:'asb-pending',   icon:'⏳', title:'आवेदन लंबित है | Application Pending',            badge:'badge-pending' },
+    objection:    { cls:'asb-objection', icon:'⚠️', title:'आपत्ति उठाई गई है | Objection Raised',            badge:'badge-objection' },
+    under_review: { cls:'asb-review',    icon:'🔍', title:'समीक्षाधीन | Under Review',                        badge:'badge-review' },
+    approved:     { cls:'asb-approved',  icon:'✅', title:'अनुमोदित | Approved – Certificate Available',       badge:'badge-approved' }
+  };
+  const s = map[data.status] || map.pending;
+  banner.className = 'app-status-banner ' + s.cls;
+  document.getElementById('statusIcon').textContent = s.icon;
+  document.getElementById('statusTitle').textContent = s.title;
+  document.getElementById('statusSub').textContent = 'आवेदन सं: ' + data.application_no + ' | ' + data.name;
+  const b = document.getElementById('statusBadge');
+  b.className = 'badge ' + s.badge;
+  b.textContent = data.status;
+
+  document.getElementById('di_appno').textContent  = data.application_no;
+  document.getElementById('di_name').textContent   = data.name;
+  document.getElementById('di_status').innerHTML   = '<span class="badge ' + s.badge + '">' + data.status + '</span>';
+  document.getElementById('di_upload').innerHTML   = data.upload_enabled ? '<span style="color:green;font-weight:700;">✔ सक्रिय</span>' : '<span style="color:red;font-weight:700;">✘ निष्क्रिय</span>';
+  document.getElementById('di_cert').innerHTML     = data.certificate_available ? '<span style="color:green;font-weight:700;">✔ उपलब्ध</span>' : '<span style="color:#888;">— उपलब्ध नहीं</span>';
+
+  if (data.application_no) document.getElementById('dlAppNo').value = data.application_no;
+
+  renderObjections(data.objections || []);
+}
+
+function renderObjections(objs) {
+  const el = document.getElementById('objList');
+  document.getElementById('objCount').textContent = '(' + objs.length + ')';
+  if (!objs.length) { el.innerHTML = '<div style="text-align:center;color:#888;padding:18px;font-size:13px;">कोई आपत्ति नहीं | No objections on record.</div>'; return; }
+  el.innerHTML = objs.map(o => `
+    <div class="obj-card ${o.resolved ? 'resolved' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="obj-type">⚠️ ${o.type}</div>
+        <span class="badge ${o.resolved ? 'badge-approved' : 'badge-objection'}">${o.resolved ? 'निस्तारित/Resolved' : 'लंबित/Pending'}</span>
+      </div>
+      <div class="obj-remark">${o.remark}</div>
+      <div class="obj-meta">📅 अंतिम तिथि | Deadline: ${new Date(o.deadline).toLocaleDateString('hi-IN')} &nbsp;|&nbsp; ID: ${o.id}</div>
+    </div>`).join('');
+}
+
+async function loadDashboard() {
+  try {
+    const r = await fetch('/api/certificate/status', { headers: authHeaders() });
+    const d = await parseResponse(r);
+    showStatus(d);
+  } catch(e) {
+    if (e.message.includes('401') || e.message.toLowerCase().includes('unauthorized')) {
+      window.location.href = '/';
+    } else {
+      setMsg('uploadMsg', e.message, 'error');
+    }
+  }
+}
+
+async function doUploadDoc() {
+  const msg = id => setMsg('uploadMsg', id, '');
+  try {
+    const form = new FormData();
+    form.append('objection_id', document.getElementById('objId').value);
+    form.append('doc_type', document.getElementById('docType').value);
+    const f = document.getElementById('objFile').files[0];
+    if (!f) { setMsg('uploadMsg', 'कृपया फ़ाइल चुनें | Please select a file.', 'error'); return; }
+    form.append('file', f);
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadBtn').textContent = 'अपलोड हो रहा है…';
+    const r = await fetch('/api/upload/objection-doc', { method:'POST', headers: authHeaders(), body: form });
+    const d = await parseResponse(r);
+    setMsg('uploadMsg', '✅ ' + (d.message || 'अपलोड सफल | Uploaded successfully'), 'success');
+    document.getElementById('objFile').value = '';
+  } catch(e) {
+    setMsg('uploadMsg', '❌ ' + e.message, 'error');
+  } finally {
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('uploadBtn').textContent = '📤 दस्तावेज़ अपलोड करें | Upload Document';
+  }
+}
+
+// load on page ready
+window.addEventListener('DOMContentLoaded', loadDashboard);
+
+// show username in nav
+const tok = getToken ? getToken() : localStorage.getItem('token');
+if (tok) {
+  try {
+    const p = JSON.parse(atob(tok.split('.')[1]));
+    document.getElementById('navUser').textContent = '👤 ' + (p.username || p.application_no || '');
+  } catch(e) {}
+}
+</script>
 </body>
 </html>

@@ -1,52 +1,588 @@
 <!doctype html>
-<html>
+<html lang="hi">
 <head>
   <meta charset="utf-8"/>
-  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin / Staff Panel – UP Bar Council Portal</title>
   <link rel="stylesheet" href="/assets/style.css"/>
 </head>
 <body>
-<div class="container">
-  <h1>Admin / Staff Panel</h1>
 
-  <h3>Excel Data Upload (Admin)</h3>
-  <input type="file" id="excelFile"/>
-  <button onclick="uploadExcel()">Upload Excel</button>
-
-  <h3>Add Objection (Staff/Admin)</h3>
-  <input id="obApp" placeholder="Application No"/>
-  <input id="obType" placeholder="Type"/>
-  <input id="obRemark" placeholder="Remark"/>
-  <button onclick="addObjection()">Add Objection</button>
-
-  <h3>Verify Upload</h3>
-  <input id="verifyUploadId" placeholder="Upload ID"/>
-  <button onclick="verifyUpload()">Verify</button>
-
-  <h3>Upload Certificate (Admin)</h3>
-  <input id="certAppNo" placeholder="Application No"/>
-  <input type="file" id="certFile"/>
-  <button onclick="uploadCertificate()">Upload Certificate</button>
-
-  <h3>Admin Override</h3>
-  <input id="ovAppNo" placeholder="Application No"/>
-  <select id="ovEnabled"><option value="1">Enable Uploads</option><option value="0">Disable Uploads</option></select>
-  <select id="ovChance"><option value="1">Grant Final Chance</option><option value="0">No Reset</option></select>
-  <button onclick="overrideUpload()">Apply Override</button>
-
-  <h3>Backup / Restore</h3>
-  <select id="backupType"><option>objection</option><option>upload</option><option>full</option></select>
-  <button onclick="runBackup()">Run Backup</button>
-  <input id="restorePath" placeholder="backup file path"/>
-  <button onclick="restoreBackup()">Restore</button>
-
-  <h3>Approve Duplicate</h3>
-  <input id="dupId" placeholder="Request ID"/>
-  <select id="dupCode"><option>D1</option><option>D2</option></select>
-  <button onclick="approveDuplicate()">Approve</button>
-
-  <pre id="adminOut"></pre>
+<div class="tricolor-bar">
+  <div class="t-saffron"></div><div class="t-white"></div><div class="t-green"></div>
 </div>
+
+<div class="access-bar">
+  <span>🇮🇳 उत्तर प्रदेश बार काउंसिल | Advocate Certificate Portal — Admin Panel</span>
+  <span id="navUser" style="color:var(--navy); font-weight:700;"></span>
+</div>
+
+<div class="gov-header">
+  <div class="gov-emblem">⚖️</div>
+  <div class="gov-titles">
+    <div class="hi">उत्तर प्रदेश बार काउंसिल — प्रशासन पैनल</div>
+    <div class="en">Uttar Pradesh Bar Council – Administration Panel</div>
+    <div class="sub">केवल अधिकृत कर्मचारियों के लिए | Authorized Staff Only</div>
+  </div>
+  <div class="gov-right-logo">
+    <div class="seal">🏛️</div>
+    <div class="seal-text">उत्तर प्रदेश</div>
+  </div>
+</div>
+
+<div class="notice-bar">
+  <span class="notice-label">🔐 Admin</span>
+  <marquee behavior="scroll" direction="left" scrollamount="3">
+    ✦ यह पृष्ठ केवल अधिकृत प्रशासक एवं कर्मचारियों के लिए है | This page is for authorized admin and staff only &nbsp;|&nbsp;
+    ✦ सभी गतिविधियाँ लॉग की जाती हैं | All activities are logged and monitored &nbsp;&nbsp;&nbsp;
+  </marquee>
+</div>
+
+<nav class="navbar">
+  <a href="/" class="nav-item home">🏠 होम</a>
+  <a href="/admin" class="nav-item active">⚙️ Admin Panel</a>
+  <span class="nav-spacer"></span>
+  <button class="nav-logout" onclick="logout()">🚪 लॉगआउट | Logout</button>
+</nav>
+
+<div class="breadcrumb">
+  <span>🏠</span> <a href="/">होम</a>
+  <span class="sep">›</span> <span>प्रशासन पैनल | Administration Panel</span>
+</div>
+
+<main id="main">
+<div class="main-wrap-wide">
+
+  <!-- Stat Cards -->
+  <div class="stat-grid" id="statGrid">
+    <div class="stat-card orange">
+      <div class="stat-label">Actions Today</div>
+      <div class="stat-val" id="st_actions">—</div>
+      <div class="stat-sub">Logged operations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Panel Status</div>
+      <div class="stat-val" style="font-size:18px; color:var(--success);">🟢 Online</div>
+      <div class="stat-sub">All systems operational</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Role</div>
+      <div class="stat-val" style="font-size:18px;" id="st_role">—</div>
+      <div class="stat-sub" id="st_user">—</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Last Login</div>
+      <div class="stat-val" style="font-size:16px;" id="st_time">—</div>
+      <div class="stat-sub">Current session</div>
+    </div>
+  </div>
+
+  <div class="sidebar-layout">
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="side-menu">
+        <div class="side-menu-head">⚙️ नियंत्रण पैनल | Control Panel</div>
+        <a href="#" class="active" onclick="showTab('tab-applications'); return false;"><span class="side-menu-icon">📊</span> Applications</a>
+        <a href="#" onclick="showTab('tab-objection'); return false;"><span class="side-menu-icon">⚠️</span> Objections</a>
+        <a href="#" onclick="showTab('tab-upload'); return false;"><span class="side-menu-icon">📤</span> Upload &amp; Verify</a>
+        <a href="#" onclick="showTab('tab-certificate'); return false;"><span class="side-menu-icon">📜</span> Certificates</a>
+        <a href="#" onclick="showTab('tab-override'); return false;"><span class="side-menu-icon">🔧</span> Override Controls</a>
+        <a href="#" onclick="showTab('tab-backup'); return false;"><span class="side-menu-icon">💾</span> Backup &amp; Restore</a>
+        <a href="#" onclick="showTab('tab-duplicate'); return false;"><span class="side-menu-icon">📋</span> Duplicate Requests</a>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="sec-head">📊 Quick Search</div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">आवेदन संख्या</label>
+            <input class="form-input" id="qsAppNo" placeholder="UP12345/25"/>
+          </div>
+          <button class="btn btn-outline btn-full btn-sm" onclick="quickSearch()">🔍 खोजें | Search</button>
+          <div id="qsResult" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div>
+
+      <!-- ── TAB: Applications ── -->
+      <div id="tab-applications" class="admin-tab-panel">
+        <div class="panel">
+          <div class="sec-head">📊 Excel से आवेदन अपलोड | Bulk Upload via Excel <span class="badge-new">ADMIN</span></div>
+          <div class="panel-body">
+            <div class="instructions" style="margin-bottom:14px;">
+              <h4>📌 Excel फ़ाइल निर्देश | Excel File Instructions</h4>
+              <ul>
+                <li>कॉलम: <strong>application_no, name, father_name, mobile, district</strong></li>
+                <li>प्रारूप: UP##### /YY (जैसे UP00001/25)</li>
+                <li>मोबाइल: 10 अंकों का | Mobile: 10 digits only</li>
+                <li>केवल .xlsx / .xls फ़ाइलें स्वीकार्य हैं</li>
+              </ul>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Excel फ़ाइल चुनें <span class="required">*</span></label>
+              <input class="file-input" id="excelFile" type="file" accept=".xlsx,.xls"/>
+            </div>
+            <button class="btn btn-primary" onclick="doUploadExcel()" id="excelBtn">📤 Excel अपलोड करें | Upload Excel</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="sec-head">🔍 आवेदन स्थिति जाँचें | View Application Status</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">आवेदन संख्या</label>
+                <input class="form-input" id="viewAppNo" placeholder="UP12345/25"/>
+              </div>
+              <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn btn-outline btn-full" onclick="viewApplication()">🔍 देखें | View</button>
+              </div>
+            </div>
+            <div id="viewAppResult"></div>
+          </div>
+        </div>
+
+        <div class="output-box" id="appOut"></div>
+      </div>
+
+      <!-- ── TAB: Objections ── -->
+      <div id="tab-objection" class="admin-tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="sec-head">⚠️ आपत्ति जोड़ें | Add Objection</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">आवेदन संख्या <span class="required">*</span></label>
+                <input class="form-input" id="obApp" placeholder="UP12345/25"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">आपत्ति प्रकार <span class="required">*</span></label>
+                <select class="form-select" id="obType">
+                  <option value="document_missing">Document Missing / दस्तावेज़ अनुपलब्ध</option>
+                  <option value="photo_unclear">Photo Unclear / फोटो अस्पष्ट</option>
+                  <option value="signature_mismatch">Signature Mismatch / हस्ताक्षर असंगत</option>
+                  <option value="name_mismatch">Name Mismatch / नाम असंगत</option>
+                  <option value="other">Other / अन्य</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">आपत्ति विवरण <span class="required">*</span> <span style="font-weight:400;color:#888;">(Remark)</span></label>
+              <textarea class="form-textarea" id="obRemark" placeholder="विस्तृत आपत्ति विवरण लिखें... | Enter detailed objection remark..."></textarea>
+            </div>
+            <button class="btn btn-danger" onclick="doAddObjection()">⚠️ आपत्ति दर्ज करें | Add Objection</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="sec-head">📋 आपत्ति सूची | List Objections</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">आवेदन संख्या</label>
+                <input class="form-input" id="listObjAppNo" placeholder="UP12345/25"/>
+              </div>
+              <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn btn-outline btn-full" onclick="listObjectionsFn()">📋 सूची देखें | List</button>
+              </div>
+            </div>
+            <div id="objListAdmin"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="sec-head">✅ आपत्ति निस्तारित करें | Resolve Objection</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">आपत्ति ID <span class="required">*</span></label>
+                <input class="form-input" id="resolveObjId" placeholder="Objection ID (e.g. 1)"/>
+              </div>
+              <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn btn-success btn-full" onclick="doResolveObjection()">✅ निस्तारित करें | Resolve</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="output-box" id="objOut"></div>
+      </div>
+
+      <!-- ── TAB: Upload & Verify ── -->
+      <div id="tab-upload" class="admin-tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="sec-head">✅ अपलोड सत्यापित करें | Verify Upload</div>
+          <div class="panel-body">
+            <div class="instructions" style="margin-bottom:14px;">
+              <h4>📌 निर्देश</h4>
+              <ul>
+                <li>अपलोड ID दर्ज करें और सत्यापित करें।</li>
+                <li>सत्यापन के बाद फ़ाइल verified फोल्डर में चली जाएगी।</li>
+                <li>Enter Upload ID and verify. File will move to verified folder.</li>
+              </ul>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">अपलोड ID <span class="required">*</span></label>
+                <input class="form-input" id="verifyUploadId" placeholder="Upload ID (e.g. 1)"/>
+              </div>
+              <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn btn-success btn-full" onclick="doVerifyUpload()">✅ सत्यापित करें | Verify Upload</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="output-box" id="uploadOut"></div>
+      </div>
+
+      <!-- ── TAB: Certificates ── -->
+      <div id="tab-certificate" class="admin-tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="sec-head">📜 प्रमाण पत्र अपलोड करें | Upload Certificate <span class="badge-new">ADMIN</span></div>
+          <div class="panel-body">
+            <div class="alert alert-warning" style="margin-bottom:14px;">
+              <span>⚠️</span>
+              <div>एक बार प्रमाण पत्र अपलोड होने पर आवेदन की स्थिति <strong>Approved</strong> हो जाएगी।<br>
+              Once certificate is uploaded, application status will change to <strong>Approved</strong>.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">आवेदन संख्या <span class="required">*</span></label>
+              <input class="form-input" id="certAppNo" placeholder="UP12345/25"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">प्रमाण पत्र फ़ाइल (PDF) <span class="required">*</span></label>
+              <input class="file-input" id="certFile" type="file" accept=".pdf,.jpg,.jpeg,.png"/>
+              <div class="form-hint">PDF, JPG या PNG | अधिकतम 10 MB | Max 10 MB</div>
+            </div>
+            <button class="btn btn-primary" onclick="doUploadCertificate()">📜 प्रमाण पत्र अपलोड करें | Upload Certificate</button>
+          </div>
+        </div>
+        <div class="output-box" id="certOut"></div>
+      </div>
+
+      <!-- ── TAB: Override Controls ── -->
+      <div id="tab-override" class="admin-tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="sec-head">🔧 अपलोड ओवरराइड | Upload Override Control <span class="badge-new">ADMIN</span></div>
+          <div class="panel-body">
+            <div class="alert alert-warning" style="margin-bottom:16px;">
+              <span>⚠️</span>
+              <div>यह कार्रवाई आवेदक की अपलोड क्षमता को बदल देती है। सावधानीपूर्वक उपयोग करें।<br>
+              This action modifies applicant's upload ability. Use with caution.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">आवेदन संख्या <span class="required">*</span></label>
+              <input class="form-input" id="ovAppNo" placeholder="UP12345/25"/>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">अपलोड स्थिति <span class="required">*</span></label>
+                <select class="form-select" id="ovEnabled">
+                  <option value="1">✅ अपलोड सक्रिय करें | Enable Uploads</option>
+                  <option value="0">❌ अपलोड निष्क्रिय करें | Disable Uploads</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">अंतिम अवसर <span class="required">*</span></label>
+                <select class="form-select" id="ovChance">
+                  <option value="1">🔄 अंतिम अवसर दें | Grant Final Chance (Reset)</option>
+                  <option value="0">— कोई रीसेट नहीं | No Reset</option>
+                </select>
+              </div>
+            </div>
+            <div style="background:#fafafa; border:1px solid #e0e0e0; border-radius:4px; padding:12px; margin-bottom:14px; font-size:12px; color:#555;">
+              <strong>📋 ओवरराइड लॉग:</strong> यह कार्रवाई action_logs में दर्ज होगी। | This action will be recorded in action_logs.
+            </div>
+            <button class="btn btn-danger" onclick="doOverrideUpload()">🔧 ओवरराइड लागू करें | Apply Override</button>
+          </div>
+        </div>
+        <div class="output-box" id="overrideOut"></div>
+      </div>
+
+      <!-- ── TAB: Backup & Restore ── -->
+      <div id="tab-backup" class="admin-tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="sec-head">💾 डेटा बैकअप | Data Backup <span class="badge-new">ADMIN</span></div>
+          <div class="panel-body">
+            <div class="instructions" style="margin-bottom:14px;">
+              <h4>📌 बैकअप प्रकार | Backup Types</h4>
+              <ul>
+                <li><strong>Full:</strong> सभी तालिकाओं का बैकअप | All tables backup</li>
+                <li><strong>Objection:</strong> केवल आपत्तियाँ + आवेदन | Objections + Applications only</li>
+                <li><strong>Upload:</strong> केवल अपलोड + आवेदन | Uploads + Applications only</li>
+              </ul>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">बैकअप प्रकार <span class="required">*</span></label>
+                <select class="form-select" id="backupType">
+                  <option value="full">🗄️ Full Backup (सभी डेटा)</option>
+                  <option value="objection">⚠️ Objection Backup</option>
+                  <option value="upload">📤 Upload Backup</option>
+                </select>
+              </div>
+              <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn btn-primary btn-full" onclick="doRunBackup()">💾 बैकअप चलाएं | Run Backup</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="sec-head">🔁 डेटा रिस्टोर | Restore from Backup <span class="badge-new">ADMIN</span></div>
+          <div class="panel-body">
+            <div class="alert alert-error" style="margin-bottom:14px;">
+              <span>🚨</span>
+              <div><strong>चेतावनी | Warning:</strong> रिस्टोर करने से मौजूदा डेटा हट जाएगा। केवल जरूरी स्थिति में उपयोग करें।<br>
+              Restoring will overwrite existing data. Use only when absolutely necessary.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">बैकअप फ़ाइल पथ <span class="required">*</span> <span style="font-weight:400;color:#888;">(Backup File Path)</span></label>
+              <input class="form-input" id="restorePath" placeholder="जैसे: backups/full_2025-01-01T02-00-00.json"/>
+              <div class="form-hint">backups/ फोल्डर से फाइल पाथ | File path from backups/ folder</div>
+            </div>
+            <button class="btn btn-danger" onclick="doRestoreBackup()" id="restoreBtn">🔁 रिस्टोर करें | Restore</button>
+          </div>
+        </div>
+
+        <div class="output-box" id="backupOut"></div>
+      </div>
+
+      <!-- ── TAB: Duplicate Requests ── -->
+      <div id="tab-duplicate" class="admin-tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="sec-head">📋 डुप्लीकेट अनुरोध अनुमोदन | Approve Duplicate Request <span class="badge-new">ADMIN</span></div>
+          <div class="panel-body">
+            <div class="instructions" style="margin-bottom:14px;">
+              <h4>📌 जारी कोड | Issue Codes</h4>
+              <ul>
+                <li><strong>D1:</strong> प्रथम डुप्लीकेट | First Duplicate Certificate</li>
+                <li><strong>D2:</strong> द्वितीय डुप्लीकेट | Second Duplicate Certificate</li>
+              </ul>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">अनुरोध ID <span class="required">*</span></label>
+                <input class="form-input" id="dupId" placeholder="Duplicate Request ID"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">जारी कोड <span class="required">*</span></label>
+                <select class="form-select" id="dupCode">
+                  <option value="D1">D1 – प्रथम डुप्लीकेट | First Duplicate</option>
+                  <option value="D2">D2 – द्वितीय डुप्लीकेट | Second Duplicate</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-success" onclick="doApproveDuplicate()">✅ अनुमोदित करें | Approve Duplicate</button>
+          </div>
+        </div>
+        <div class="output-box" id="dupAdminOut"></div>
+      </div>
+
+    </div><!-- /main content -->
+  </div><!-- /sidebar-layout -->
+
+  <!-- Global Output -->
+  <div class="output-box" id="adminOut" style="margin-top:10px;"></div>
+
+</div>
+</main>
+
+<footer class="gov-footer">
+  <div class="footer-bottom">
+    <span>© 2025 उत्तर प्रदेश बार काउंसिल | All Rights Reserved | NIC | <strong>ADMIN ACCESS — ALL ACTIVITY MONITORED</strong></span>
+    <span><a href="#">गोपनीयता नीति</a> | <a href="#">अस्वीकरण</a></span>
+  </div>
+</footer>
+
 <script src="/assets/app.js"></script>
+<script>
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = '/';
+}
+
+// Tab switching
+function showTab(id) {
+  document.querySelectorAll('.admin-tab-panel').forEach(p => p.style.display = 'none');
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'block';
+  document.querySelectorAll('.side-menu a').forEach(a => a.classList.remove('active'));
+  const map = {
+    'tab-applications': 0, 'tab-objection': 1, 'tab-upload': 2,
+    'tab-certificate': 3, 'tab-override': 4, 'tab-backup': 5, 'tab-duplicate': 6
+  };
+  const links = document.querySelectorAll('.side-menu a');
+  if (links[map[id]]) links[map[id]].classList.add('active');
+}
+
+function showOut(boxId, msg, ok) {
+  const el = document.getElementById(boxId);
+  el.classList.add('visible');
+  el.textContent = (ok ? '✅ ' : '❌ ') + msg;
+}
+
+// Stat init
+window.addEventListener('DOMContentLoaded', () => {
+  const tok = localStorage.getItem('token');
+  if (!tok) { window.location.href = '/'; return; }
+  try {
+    const p = JSON.parse(atob(tok.split('.')[1]));
+    document.getElementById('navUser').textContent = '👤 ' + (p.username || '');
+    document.getElementById('st_role').textContent = (p.role || '').toUpperCase();
+    document.getElementById('st_user').textContent = p.username || '';
+  } catch(e) {}
+  document.getElementById('st_time').textContent = new Date().toLocaleTimeString('hi-IN');
+});
+
+async function doUploadExcel() {
+  const f = document.getElementById('excelFile').files[0];
+  if (!f) { showOut('appOut', 'Excel file required | फाइल चुनें', false); return; }
+  const form = new FormData(); form.append('file', f);
+  const btn = document.getElementById('excelBtn');
+  btn.disabled = true; btn.textContent = 'अपलोड हो रहा है…';
+  try {
+    const r = await fetch('/api/admin/upload-excel', { method:'POST', headers: authHeaders(), body: form });
+    const d = await parseResponse(r);
+    showOut('appOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('appOut', e.message, false); }
+  finally { btn.disabled = false; btn.textContent = '📤 Excel अपलोड करें | Upload Excel'; }
+}
+
+async function viewApplication() {
+  const no = document.getElementById('viewAppNo').value.trim();
+  if (!no) return;
+  try {
+    const r = await fetch('/api/objection/' + encodeURIComponent(no), { headers: authHeaders() });
+    const d = await r.json();
+    const el = document.getElementById('viewAppResult');
+    if (Array.isArray(d) && d.length === 0) {
+      el.innerHTML = '<div class="alert alert-info" style="margin-top:10px;"><span>ℹ️</span><div>कोई आपत्ति नहीं मिली | No objections found.</div></div>';
+    } else if (Array.isArray(d)) {
+      el.innerHTML = '<div class="table-wrap" style="margin-top:10px;"><table class="gov-table"><thead><tr><th>ID</th><th>Type</th><th>Remark</th><th>Deadline</th><th>Resolved</th></tr></thead><tbody>' +
+        d.map(o => `<tr><td>${o.id}</td><td>${o.type}</td><td>${o.remark}</td><td>${new Date(o.deadline).toLocaleDateString()}</td><td><span class="badge ${o.resolved?'badge-approved':'badge-objection'}">${o.resolved?'Yes':'No'}</span></td></tr>`).join('') +
+        '</tbody></table></div>';
+    } else {
+      el.innerHTML = '<div class="output-box visible" style="margin-top:10px;">' + JSON.stringify(d, null, 2) + '</div>';
+    }
+  } catch(e) { showOut('appOut', e.message, false); }
+}
+
+async function quickSearch() {
+  const no = document.getElementById('qsAppNo').value.trim();
+  if (!no) return;
+  document.getElementById('viewAppNo').value = no;
+  showTab('tab-applications');
+  viewApplication();
+}
+
+async function doAddObjection() {
+  const body = {
+    application_no: document.getElementById('obApp').value.trim(),
+    type: document.getElementById('obType').value,
+    remark: document.getElementById('obRemark').value.trim()
+  };
+  if (!body.application_no || !body.remark) { showOut('objOut', 'सभी फील्ड भरें | Fill all fields', false); return; }
+  try {
+    const r = await fetch('/api/objection', { method:'POST', headers: {...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await parseResponse(r);
+    showOut('objOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('objOut', e.message, false); }
+}
+
+async function listObjectionsFn() {
+  const no = document.getElementById('listObjAppNo').value.trim();
+  if (!no) return;
+  try {
+    const r = await fetch('/api/objection/' + encodeURIComponent(no), { headers: authHeaders() });
+    const d = await r.json();
+    const el = document.getElementById('objListAdmin');
+    if (!d.length) { el.innerHTML = '<div class="alert alert-info" style="margin-top:10px;"><span>ℹ️</span><div>कोई आपत्ति नहीं | No objections</div></div>'; return; }
+    el.innerHTML = '<div class="table-wrap" style="margin-top:12px;"><table class="gov-table"><thead><tr><th>ID</th><th>Type</th><th>Remark</th><th>Deadline</th><th>Resolved</th></tr></thead><tbody>' +
+      d.map(o => `<tr><td><strong>${o.id}</strong></td><td>${o.type}</td><td>${o.remark}</td><td>${new Date(o.deadline).toLocaleDateString()}</td><td><span class="badge ${o.resolved?'badge-approved':'badge-objection'}">${o.resolved?'हाँ/Yes':'नहीं/No'}</span></td></tr>`).join('') +
+      '</tbody></table></div>';
+  } catch(e) { showOut('objOut', e.message, false); }
+}
+
+async function doResolveObjection() {
+  const id = document.getElementById('resolveObjId').value;
+  if (!id) { showOut('objOut', 'Objection ID required', false); return; }
+  try {
+    const r = await fetch('/api/objection/resolve', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({objection_id: Number(id)}) });
+    const d = await parseResponse(r);
+    showOut('objOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('objOut', e.message, false); }
+}
+
+async function doVerifyUpload() {
+  const id = document.getElementById('verifyUploadId').value;
+  if (!id) { showOut('uploadOut', 'Upload ID required', false); return; }
+  try {
+    const r = await fetch('/api/upload/verify', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({upload_id: Number(id)}) });
+    const d = await parseResponse(r);
+    showOut('uploadOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('uploadOut', e.message, false); }
+}
+
+async function doUploadCertificate() {
+  const f = document.getElementById('certFile').files[0];
+  const no = document.getElementById('certAppNo').value.trim();
+  if (!f || !no) { showOut('certOut', 'Application No and file required', false); return; }
+  const form = new FormData(); form.append('application_no', no); form.append('file', f);
+  try {
+    const r = await fetch('/api/certificate/upload', { method:'POST', headers: authHeaders(), body: form });
+    const d = await parseResponse(r);
+    showOut('certOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('certOut', e.message, false); }
+}
+
+async function doOverrideUpload() {
+  const body = {
+    application_no: document.getElementById('ovAppNo').value.trim(),
+    upload_enabled: document.getElementById('ovEnabled').value === '1',
+    grant_final_chance: document.getElementById('ovChance').value === '1'
+  };
+  if (!body.application_no) { showOut('overrideOut', 'Application No required', false); return; }
+  try {
+    const r = await fetch('/api/admin/override-upload', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await parseResponse(r);
+    showOut('overrideOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('overrideOut', e.message, false); }
+}
+
+async function doRunBackup() {
+  try {
+    const r = await fetch('/api/admin/backup', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({type: document.getElementById('backupType').value}) });
+    const d = await parseResponse(r);
+    showOut('backupOut', '✅ Backup created: ' + JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('backupOut', e.message, false); }
+}
+
+async function doRestoreBackup() {
+  const fp = document.getElementById('restorePath').value.trim();
+  if (!fp) { showOut('backupOut', 'File path required', false); return; }
+  if (!confirm('⚠️ Are you sure? This will overwrite existing data! / क्या आप सुनिश्चित हैं? मौजूदा डेटा हट जाएगा!')) return;
+  try {
+    const r = await fetch('/api/admin/restore', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({file_path: fp}) });
+    const d = await parseResponse(r);
+    showOut('backupOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('backupOut', e.message, false); }
+}
+
+async function doApproveDuplicate() {
+  const id = document.getElementById('dupId').value;
+  const code = document.getElementById('dupCode').value;
+  if (!id) { showOut('dupAdminOut', 'Request ID required', false); return; }
+  try {
+    const r = await fetch('/api/admin/approve-duplicate', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({id: Number(id), issue_code: code}) });
+    const d = await parseResponse(r);
+    showOut('dupAdminOut', JSON.stringify(d, null, 2), true);
+  } catch(e) { showOut('dupAdminOut', e.message, false); }
+}
+</script>
 </body>
 </html>

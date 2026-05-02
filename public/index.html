@@ -1,34 +1,234 @@
 <!doctype html>
-<html>
+<html lang="hi">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Bar Council Portal</title>
+  <title>उत्तर प्रदेश बार काउंसिल – प्रमाण पत्र पोर्टल</title>
   <link rel="stylesheet" href="/assets/style.css"/>
 </head>
 <body>
-  <div class="container">
-    <h1>Bar Council Certificate Portal</h1>
-    <div class="grid two-col">
-      <section class="card">
-        <h2>Candidate Login</h2>
-        <input id="candApp" placeholder="Application No (UP12345/25)"/>
-        <button id="reqOtpBtn" onclick="requestCandidateOtp()">Request OTP</button>
-        <div id="candOtpMsg" class="msg"></div>
-        <input id="candOtp" placeholder="Enter OTP (6 digits)"/>
-        <button id="verifyOtpBtn" onclick="verifyCandidateOtp()">Verify OTP</button>
-        <div id="candVerifyMsg" class="msg"></div>
-      </section>
-      <section class="card">
-        <h2>Admin/Staff Login</h2>
-        <input id="user" placeholder="Username"/>
-        <input id="pass" type="password" placeholder="Password"/>
-        <button id="userLoginBtn" onclick="loginUser()">Login</button>
-        <div id="userLoginMsg" class="msg"></div>
-      </section>
-    </div>
-    <p><a href="/duplicate">Apply for Duplicate Certificate</a></p>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- Tricolor -->
+<div class="tricolor-bar">
+  <div class="t-saffron"></div><div class="t-white"></div><div class="t-green"></div>
+</div>
+
+<!-- Access bar -->
+<div class="access-bar">
+  <span>🇮🇳 भारत सरकार | Government of India &nbsp;|&nbsp; उत्तर प्रदेश शासन | Government of Uttar Pradesh</span>
+  <div class="access-btns">
+    <span>Text Size: </span>
+    <button onclick="document.body.style.fontSize='12px'" title="Small">A-</button>
+    <button onclick="document.body.style.fontSize='15px'" title="Normal">A</button>
+    <button onclick="document.body.style.fontSize='18px'" title="Large">A+</button>
   </div>
-  <script src="/assets/app.js"></script>
+</div>
+
+<!-- Gov Header -->
+<div class="gov-header">
+  <div class="gov-emblem">⚖️</div>
+  <div class="gov-titles">
+    <div class="hi">उत्तर प्रदेश बार काउंसिल</div>
+    <div class="en">Uttar Pradesh Bar Council</div>
+    <div class="sub">अधिवक्ता प्रमाण पत्र पोर्टल | Advocate Certificate Portal</div>
+  </div>
+  <div class="gov-right-logo">
+    <div class="seal">🏛️</div>
+    <div class="seal-text">उत्तर प्रदेश<br>Uttar Pradesh</div>
+  </div>
+</div>
+
+<!-- Notice bar -->
+<div class="notice-bar">
+  <span class="notice-label">📢 सूचना</span>
+  <marquee behavior="scroll" direction="left" scrollamount="3">
+    &nbsp;&nbsp;&nbsp; ✦ प्रमाण पत्र डाउनलोड के लिए OTP आपके पंजीकृत मोबाइल नंबर पर भेजा जाएगा &nbsp;|&nbsp;
+    Certificate download OTP will be sent to your registered mobile number. &nbsp;|&nbsp;
+    ✦ आवेदन संख्या प्रारूप: UP12345/25 &nbsp;|&nbsp; Application No Format: UP12345/25 &nbsp;|&nbsp;
+    ✦ किसी भी समस्या के लिए कार्यालय से संपर्क करें | For any issue contact office. &nbsp;&nbsp;&nbsp;
+  </marquee>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="/" class="nav-item home active">🏠 होम | Home</a>
+  <a href="/duplicate" class="nav-item">📋 डुप्लीकेट प्रमाणपत्र</a>
+  <span class="nav-spacer"></span>
+  <a href="#" class="nav-item" style="font-size:12px;background:rgba(0,0,0,.15);">📞 हेल्पलाइन: 0522-XXXXXXX</a>
+</nav>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <span>🏠</span> <a href="/">होम</a> <span class="sep">›</span> <span>लॉगिन | Login</span>
+</div>
+
+<!-- Main -->
+<main id="main">
+<div class="login-section">
+  <div class="main-wrap" style="max-width:960px;">
+
+    <!-- Page Title -->
+    <div style="text-align:center; margin-bottom:22px;">
+      <h2 style="font-size:20px; color:var(--navy2); font-weight:700;">अधिवक्ता प्रमाण पत्र पोर्टल में आपका स्वागत है</h2>
+      <p style="color:#666; font-size:13px; margin-top:4px;">Welcome to UP Bar Council Advocate Certificate Portal</p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions" style="margin-bottom:20px;">
+      <h4>📌 महत्वपूर्ण निर्देश | Important Instructions</h4>
+      <ul>
+        <li>अभ्यर्थी अपनी आवेदन संख्या (UP12345/25 प्रारूप में) दर्ज करें और OTP प्राप्त करें।</li>
+        <li>Candidates enter their Application No (format UP12345/25) and receive OTP for login.</li>
+        <li>कर्मचारी / प्रशासक अपना यूज़रनेम और पासवर्ड दर्ज करें। | Admin/Staff enter username &amp; password.</li>
+        <li>OTP की वैधता 5 मिनट है। | OTP is valid for 5 minutes only.</li>
+      </ul>
+    </div>
+
+    <div class="form-row" style="gap:22px; align-items:start;">
+
+      <!-- Candidate Login -->
+      <div class="login-card">
+        <div class="login-card-head">
+          👤 अभ्यर्थी लॉगिन | Candidate Login
+        </div>
+        <div class="login-card-body">
+          <div class="otp-note">
+            📱 OTP आपके पंजीकृत मोबाइल नंबर पर भेजा जाएगा।<br>OTP will be sent to your registered mobile number.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="candApp">आवेदन संख्या <span class="required">*</span> <span style="font-weight:400;color:#888;">(Application No)</span></label>
+            <input class="form-input" id="candApp" placeholder="जैसे: UP12345/25" autocomplete="off" maxlength="10"/>
+            <div class="form-hint">प्रारूप: UP##### /YY (Example: UP00123/25)</div>
+          </div>
+
+          <div id="candOtpMsg" class="msg"></div>
+          <button class="btn btn-saffron btn-full" id="reqOtpBtn" onclick="requestCandidateOtp()">
+            📤 OTP प्राप्त करें | Request OTP
+          </button>
+
+          <hr style="border:none; border-top:1px solid #e8edf5; margin:16px 0;"/>
+
+          <div class="form-group">
+            <label class="form-label" for="candOtp">OTP दर्ज करें <span class="required">*</span> <span style="font-weight:400;color:#888;">(6 digits)</span></label>
+            <input class="form-input" id="candOtp" placeholder="● ● ● ● ● ●" maxlength="6" inputmode="numeric" autocomplete="one-time-code"/>
+          </div>
+
+          <div id="candVerifyMsg" class="msg"></div>
+          <button class="btn btn-primary btn-full" id="verifyOtpBtn" onclick="verifyCandidateOtp()">
+            ✅ OTP सत्यापित करें | Verify OTP &amp; Login
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin/Staff Login -->
+      <div class="login-card">
+        <div class="login-card-head" style="background:var(--navy2);">
+          🔐 प्रशासक / कर्मचारी लॉगिन | Admin / Staff Login
+        </div>
+        <div class="login-card-body">
+
+          <div class="otp-note" style="background:#e8edf8; border-color:#a0b0cc; color:#003;">
+            🔒 यह अनुभाग केवल अधिकृत कर्मचारियों के लिए है।<br>This section is for authorized staff only.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="user">उपयोगकर्ता नाम <span class="required">*</span> <span style="font-weight:400;color:#888;">(Username)</span></label>
+            <input class="form-input" id="user" placeholder="Username" autocomplete="username"/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pass">पासवर्ड <span class="required">*</span> <span style="font-weight:400;color:#888;">(Password)</span></label>
+            <input class="form-input" id="pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label">कैप्चा <span class="required">*</span> <span style="font-weight:400;color:#888;">(Captcha)</span></label>
+            <div class="captcha-box">
+              <div class="captcha-img" id="captchaText">K7M2X</div>
+              <button class="captcha-refresh" onclick="refreshCaptcha()" title="Refresh">🔄</button>
+              <input class="form-input" id="captchaInput" placeholder="Enter captcha" style="max-width:120px;"/>
+            </div>
+          </div>
+
+          <div id="userLoginMsg" class="msg"></div>
+          <button class="btn btn-primary btn-full" id="userLoginBtn" onclick="loginUser()" style="margin-top:10px;">
+            🔑 लॉगिन करें | Login
+          </button>
+
+          <div style="text-align:center; margin-top:12px; font-size:12px; color:#888;">
+            पासवर्ड भूल गये? कार्यालय से संपर्क करें।<br>Forgot password? Contact office.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /grid -->
+
+    <!-- Links -->
+    <div style="text-align:center; margin-top:22px; padding-top:16px; border-top:1px solid #dde4f0;">
+      <a href="/duplicate" style="color:var(--navy); font-size:13px; font-weight:700; text-decoration:none;">
+        📋 डुप्लीकेट प्रमाण पत्र के लिए आवेदन करें | Apply for Duplicate Certificate →
+      </a>
+    </div>
+
+  </div>
+</div>
+</main>
+
+<!-- Footer -->
+<footer class="gov-footer">
+  <div class="footer-top">
+    <div class="footer-col">
+      <h4>⚖️ उत्तर प्रदेश बार काउंसिल</h4>
+      <p style="font-size:12px; color:#8899aa; line-height:1.7;">अधिवक्ता प्रमाण पत्र पोर्टल<br>Advocate Certificate Portal<br>उत्तर प्रदेश, भारत</p>
+    </div>
+    <div class="footer-col">
+      <h4>🔗 महत्वपूर्ण लिंक</h4>
+      <a href="/">होम | Home</a>
+      <a href="/duplicate">डुप्लीकेट प्रमाण पत्र</a>
+      <a href="#">बार काउंसिल ऑफ इंडिया</a>
+      <a href="#">उत्तर प्रदेश शासन</a>
+    </div>
+    <div class="footer-col">
+      <h4>📞 संपर्क | Contact</h4>
+      <p style="font-size:12px; color:#8899aa; line-height:1.9;">
+        हेल्पडेस्क: 0522-XXXXXXX<br>
+        ईमेल: helpdesk@upbarcouncil.gov.in<br>
+        समय: सोम–शुक्र 10:00–17:00<br>
+        Mon–Fri 10:00 AM – 5:00 PM
+      </p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 उत्तर प्रदेश बार काउंसिल | All Rights Reserved | NIC</span>
+    <span><a href="#">गोपनीयता नीति</a> | <a href="#">अस्वीकरण</a> | <a href="#">साइटमैप</a></span>
+  </div>
+</footer>
+
+<script src="/assets/app.js"></script>
+<script>
+const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+let currentCaptcha = 'K7M2X';
+function refreshCaptcha() {
+  let s = '';
+  for (let i = 0; i < 5; i++) s += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
+  currentCaptcha = s;
+  document.getElementById('captchaText').textContent = s;
+  document.getElementById('captchaInput').value = '';
+}
+// Override loginUser to include captcha check
+const _origLogin = window.loginUser;
+window.loginUser = function() {
+  const cap = document.getElementById('captchaInput').value.trim().toUpperCase();
+  if (cap !== currentCaptcha) {
+    setMsg('userLoginMsg', 'कैप्चा गलत है। पुनः प्रयास करें। | Incorrect captcha.', 'error');
+    refreshCaptcha();
+    return;
+  }
+  _origLogin();
+};
+</script>
 </body>
 </html>
