@@ -27,11 +27,11 @@ async function uploadExcelApplications(req, res) {
       if (!validateMobile(mobile)) { errors.push({ row: i + 2, error: 'invalid mobile' }); continue; }
       if (!name || !father_name || !district) { errors.push({ row: i + 2, error: 'missing fields' }); continue; }
 
-      const [dup] = await pool.query('SELECT id FROM applications WHERE application_no=?', [application_no]);
-      if (dup.length) { errors.push({ row: i + 2, error: 'duplicate application_no' }); continue; }
+      const dup = await pool.query('SELECT id FROM applications WHERE application_no=$1', [application_no]);
+      if (dup.rows.length) { errors.push({ row: i + 2, error: 'duplicate application_no' }); continue; }
 
       await pool.query(
-        'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES(?,?,?,?,?)',
+        'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)',
         [application_no, name, father_name, mobile, district]
       );
       inserted += 1;
@@ -47,12 +47,19 @@ async function uploadExcelApplications(req, res) {
 async function overrideUpload(req, res) {
   const { application_no, upload_enabled, grant_final_chance } = req.body;
   try {
-    await pool.query(
-      'UPDATE applications SET upload_enabled=?, final_chance_used=IF(?,0,final_chance_used), reopen_count=reopen_count+1 WHERE application_no=?',
-      [upload_enabled ? 1 : 0, grant_final_chance ? 1 : 0, application_no]
-    );
+    if (grant_final_chance) {
+      await pool.query(
+        'UPDATE applications SET upload_enabled=$1, final_chance_used=0, reopen_count=reopen_count+1 WHERE application_no=$2',
+        [upload_enabled ? 1 : 0, application_no]
+      );
+    } else {
+      await pool.query(
+        'UPDATE applications SET upload_enabled=$1, reopen_count=reopen_count+1 WHERE application_no=$2',
+        [upload_enabled ? 1 : 0, application_no]
+      );
+    }
     await logAction(req.user.username, 'admin', 'override_upload', JSON.stringify(req.body));
-    res.json({ message: 'Override updated' });
+    res.json({ success: true, message: 'Override updated', data: null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -85,7 +92,7 @@ async function approveDuplicate(req, res) {
   try {
     const { id, issue_code } = req.body;
     if (!['D1', 'D2'].includes(issue_code)) return res.status(400).json({ error: 'Invalid issue code' });
-    await pool.query('UPDATE duplicate_requests SET status="approved", issue_code=? WHERE id=?', [issue_code, id]);
+    await pool.query('UPDATE duplicate_requests SET status=$1, issue_code=$2 WHERE id=$3', ['approved', issue_code, id]);
     await logAction(req.user.username, 'admin', 'approve_duplicate', `id=${id},${issue_code}`);
     res.json({ message: 'Duplicate approved' });
   } catch (error) {
