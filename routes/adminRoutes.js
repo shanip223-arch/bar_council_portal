@@ -7,7 +7,7 @@ const {
   uploadExcelApplications, previewExcel, importExcel, autoImportExcel,
   overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
   getStats, getApplications, getApplicationById, updateApplicationStatus,
-  getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
+  createApplication, getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
 } = require('../controllers/adminController');
 
 /* ── Multer: diskStorage preserves original extension ── */
@@ -59,6 +59,7 @@ router.get('/stats',              auth, role('admin', 'staff'), getStats);
 router.get('/applications',       auth, role('admin', 'staff'), getApplications);
 router.get('/applications/:id',   auth, role('admin', 'staff'), getApplicationById);
 router.put('/applications/:id/status', auth, role('admin', 'staff'), updateApplicationStatus);
+router.post('/applications',       auth, role('admin', 'staff'), createApplication);
 
 router.get('/staff',              auth, role('admin'), getStaff);
 router.post('/staff',             auth, role('admin'), addStaff);

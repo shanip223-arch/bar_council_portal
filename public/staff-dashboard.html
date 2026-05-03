@@ -143,78 +143,75 @@
   <div class="page-body staff-section" id="sec-upload-excel">
     <div class="panel" style="max-width:980px;margin-bottom:16px;">
       <div class="panel-header">
-        <span class="panel-title">📥 Upload Applications (Excel)</span>
-        <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">Upload → Preview Columns → Map Fields → Import</span>
+        <span class="panel-title">📥 Upload Applications</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-sm" id="tab-bulk" onclick="showUploadTab('bulk')" style="background:var(--navy2);color:#fff;">Bulk Upload</button>
+          <button class="btn btn-outline btn-sm" id="tab-manual" onclick="showUploadTab('manual')">Manual Entry</button>
+        </div>
       </div>
       <div class="panel-body">
-
-        <!-- Step 1: File pick -->
-        <div id="sxl-area">
+        <div id="tab-bulk-panel">
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12.5px;line-height:1.8;">
-            <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">📋 Any column names are accepted — system auto-suggests mapping, you can override</div>
+            <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">📋 Excel upload with header mapping and validation</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:3px 24px;color:#374151;">
               <div><span style="color:#64748b;">Application No:</span> <code>Application No · App No · Enrollment No · Reg No</code></div>
               <div><span style="color:#64748b;">Name:</span> <code>Name · Candidate Name · Full Name · Student Name</code></div>
               <div><span style="color:#64748b;">Father Name:</span> <code>Father Name · Father's Name · Guardian Name · F Name</code></div>
               <div><span style="color:#64748b;">Mobile:</span> <code>Mobile · Mobile No · Phone · Contact No · Mob</code></div>
               <div><span style="color:#64748b;">District:</span> <code>District · Dist · Zila · Zilla</code></div>
-              <div><span style="color:#64748b;">DOB (optional):</span> <code>DOB · Date of Birth · Birth Date</code></div>
+              <div><span style="color:#64748b;">Status:</span> <code>pending · approved · objection · under_review · rejected</code></div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Excel File (.xlsx / .xls) — max 20 MB</label>
-            <input class="file-input" type="file" id="sxlFile" accept=".xlsx,.xls"/>
+          <div id="sxl-area">
+            <div class="form-group">
+              <label class="form-label">Excel File (.xlsx) — max 20 MB</label>
+              <input class="file-input" type="file" id="sxlFile" accept=".xlsx,.xls"/>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="sxlPreviewBtn" onclick="sxlDoPreview()">🔍 Upload &amp; Preview Columns →</button>
+              <div id="sxlMsg" class="msg" style="margin-bottom:0;"></div>
+            </div>
           </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" id="sxlPreviewBtn" onclick="sxlDoPreview()">🔍 Upload &amp; Preview Columns →</button>
-            <div id="sxlMsg" class="msg" style="margin-bottom:0;"></div>
+          <div id="sxl-step2" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+              <div style="font-size:13px;">
+                <strong id="sxl-fname" style="color:var(--navy2);">file.xlsx</strong>
+                &nbsp;|&nbsp;<span id="sxl-rowcount" style="color:var(--green);font-weight:700;">0 rows</span>
+                &nbsp;|&nbsp;<span id="sxl-sheetname" style="color:var(--muted);font-size:12px;"></span>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="sxlReset()">← Start Over</button>
+            </div>
+            <div style="margin-bottom:20px;">
+              <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">📌 Column Mapping</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Required fields: <strong>application_no · name · father_name · mobile · district · status</strong></div>
+              <div class="table-wrap"><table class="data-table"><thead><tr><th>Excel Column</th><th>Auto-Detected As</th><th style="min-width:210px;">Map To (editable ↓)</th><th>Sample Value</th></tr></thead><tbody id="sxlMappingBody"></tbody></table></div>
+            </div>
+            <div style="margin-bottom:20px;">
+              <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">👁️ Data Preview — First 10 Rows</div>
+              <div class="table-wrap" style="overflow-x:auto;"><table class="data-table" style="min-width:max-content;"><thead id="sxlPreviewHead"></thead><tbody id="sxlPreviewBody"></tbody></table></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="sxlImportBtn" onclick="sxlDoImport()">✅ Import Selected Fields</button>
+              <button class="btn btn-outline" onclick="sxlReset()">← Start Over</button>
+              <div id="sxlImportMsg" class="msg" style="margin-bottom:0;"></div>
+            </div>
+          </div>
+          <div id="sxl-result" style="display:none;"></div>
+        </div>
+        <div id="tab-manual-panel" style="display:none;">
+          <div style="max-width:700px;">
+            <div class="form-group"><label class="form-label">Application No</label><input class="form-input" id="manApp" placeholder="UP12345/25"/></div>
+            <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="manName"/></div>
+            <div class="form-group"><label class="form-label">Father Name</label><input class="form-input" id="manFather"/></div>
+            <div class="form-group"><label class="form-label">Mobile</label><input class="form-input" id="manMobile"/></div>
+            <div class="form-group"><label class="form-label">District</label><input class="form-input" id="manDistrict"/></div>
+            <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="manStatus"><option value="pending">pending</option><option value="objection">objection</option><option value="under_review">under_review</option><option value="approved">approved</option><option value="rejected">rejected</option></select></div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="submitManualApp()">💾 Save Application</button>
+              <div id="manMsg" class="msg" style="margin-bottom:0;"></div>
+            </div>
           </div>
         </div>
-
-        <!-- Step 2: Mapping + preview -->
-        <div id="sxl-step2" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-            <div style="font-size:13px;">
-              <strong id="sxl-fname" style="color:var(--navy2);">file.xlsx</strong>
-              &nbsp;|&nbsp;<span id="sxl-rowcount" style="color:var(--green);font-weight:700;">0 rows</span>
-              &nbsp;|&nbsp;<span id="sxl-sheetname" style="color:var(--muted);font-size:12px;"></span>
-            </div>
-            <button class="btn btn-outline btn-sm" onclick="sxlReset()">← Start Over</button>
-          </div>
-
-          <div style="margin-bottom:20px;">
-            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">📌 Column Mapping</div>
-            <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">
-              Auto-detection is shown as a suggestion — <strong>you can override any dropdown</strong>.
-              Required: <strong>application_no · name · father_name · mobile · district</strong>. Optional: <strong>dob</strong>. Set <em>Ignore</em> for columns you don't need.
-            </div>
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead><tr><th>Excel Column</th><th>Auto-Detected As</th><th style="min-width:210px;">Map To (editable ↓)</th><th>Sample Value</th></tr></thead>
-                <tbody id="sxlMappingBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style="margin-bottom:20px;">
-            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">👁️ Data Preview — First 5 Rows</div>
-            <div class="table-wrap" style="overflow-x:auto;">
-              <table class="data-table" style="min-width:max-content;">
-                <thead id="sxlPreviewHead"></thead>
-                <tbody id="sxlPreviewBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" id="sxlImportBtn" onclick="sxlDoImport()">✅ Import Selected Fields</button>
-            <button class="btn btn-outline" onclick="sxlReset()">← Start Over</button>
-            <div id="sxlImportMsg" class="msg" style="margin-bottom:0;"></div>
-          </div>
-        </div>
-
-        <!-- Step 3: Results -->
-        <div id="sxl-result" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -374,6 +371,15 @@ function reloadSection() {
   else if (currentSection === 'duplicates') loadDuplicates();
   else if (currentSection === 'objections') loadObjections();
   else if (currentSection === 'upload-cert') loadRecentCerts();
+  else if (currentSection === 'upload-excel') sxlDoPreview();
+}
+function showUploadTab(tab) {
+  document.getElementById('tab-bulk-panel').style.display = tab === 'bulk' ? '' : 'none';
+  document.getElementById('tab-manual-panel').style.display = tab === 'manual' ? '' : 'none';
+  document.getElementById('tab-bulk').className = tab === 'bulk' ? 'btn btn-sm' : 'btn btn-outline btn-sm';
+  document.getElementById('tab-manual').className = tab === 'manual' ? 'btn btn-sm' : 'btn btn-outline btn-sm';
+  document.getElementById('tab-bulk').style.cssText = tab === 'bulk' ? 'background:var(--navy2);color:#fff;' : '';
+  document.getElementById('tab-manual').style.cssText = tab === 'manual' ? 'background:var(--navy2);color:#fff;' : '';
 }
 
 document.querySelectorAll('[data-sec]').forEach(link => {
@@ -482,7 +488,7 @@ const SXL_FIELDS = [
   { value:'father_name',    label:'father_name  (Required)' },
   { value:'mobile',         label:'mobile  (Required)' },
   { value:'district',       label:'district  (Required)' },
-  { value:'dob',            label:'dob  (Optional)' },
+  { value:'status',         label:'status  (Required)' },
 ];
 
 function sxlNameDetect(col) {
@@ -492,7 +498,7 @@ function sxlNameDetect(col) {
   if (n.includes('father')||n.includes('f name')||n.includes('guardian')||n.includes('parent')) return 'father_name';
   if (n.includes('mobile')||n.includes('phone')||n.includes('contact')||n.includes('mob')) return 'mobile';
   if (n.includes('district')||n.includes('dist')||n.includes('zila')) return 'district';
-  if (n.includes('dob')||n.includes('birth')) return 'dob';
+  if (n.includes('status')) return 'status';
   return '';
 }
 
@@ -567,7 +573,7 @@ async function sxlDoPreview() {
     document.getElementById('sxl-rowcount').textContent  = totalRows + ' data rows';
     document.getElementById('sxl-sheetname').textContent = 'Sheet: ' + (sheetName||'—');
     buildSxlMappingTable(columns, preview, suggestedFields);
-    buildSxlPreviewTable(columns, preview);
+    buildSxlPreviewTable(columns, preview.slice(0,10));
     document.getElementById('sxl-area').style.display  = 'none';
     document.getElementById('sxl-step2').style.display = '';
   } catch(e) { sfMsg('sxlMsg','❌ '+e.message,'error'); }
@@ -593,7 +599,7 @@ async function sxlDoImport() {
   const btn = document.getElementById('sxlImportBtn');
   const mapping = {};
   sxlState.columns.forEach((col,i)=>{ const v=document.getElementById('sxlmap_'+i)?.value; if(v) mapping[v]=col; });
-  const REQUIRED = ['application_no','name','father_name','mobile','district'];
+  const REQUIRED = ['application_no','name','father_name','mobile','district','status'];
   const missing  = REQUIRED.filter(f=>!mapping[f]);
   if (missing.length) { sfMsg('sxlImportMsg','❌ Please map required fields: '+missing.join(', '),'error'); return; }
 
@@ -871,3 +877,20 @@ async function objAct(id, action) {
 </script>
 </body>
 </html>
+
+async function submitManualApp() {
+  const body = {
+    application_no: document.getElementById('manApp').value,
+    name: document.getElementById('manName').value,
+    father_name: document.getElementById('manFather').value,
+    mobile: document.getElementById('manMobile').value,
+    district: document.getElementById('manDistrict').value,
+    status: document.getElementById('manStatus').value
+  };
+  try {
+    await AdminAPI.post('/api/admin/applications', body);
+    sfMsg('manMsg', '✅ Application saved', 'success');
+    ['manApp','manName','manFather','manMobile','manDistrict'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('manStatus').value = 'pending';
+  } catch (e) { sfMsg('manMsg', '❌ ' + e.message, 'error'); }
+}

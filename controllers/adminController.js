@@ -413,6 +413,25 @@ async function approveDuplicate(req, res) {
   } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
+
+
+async function createApplication(req, res) {
+  try {
+    const { application_no, name, father_name, mobile, district, status = 'pending' } = req.body;
+    const allowed = ['pending', 'objection', 'under_review', 'approved', 'rejected'];
+    const cleanMobile = String(mobile || '').replace(/\D/g, '');
+    if (!application_no || !name || !father_name || !mobile || !district) return res.status(400).json({ success: false, message: 'application_no, name, father_name, mobile, district are required', data: null });
+    if (!validateApplicationNo(String(application_no).trim().toUpperCase())) return res.status(400).json({ success: false, message: 'Invalid application number format', data: null });
+    if (!validateMobile(cleanMobile)) return res.status(400).json({ success: false, message: 'Invalid mobile number', data: null });
+    if (!allowed.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status', data: null });
+    const exists = await pool.query('SELECT id FROM applications WHERE application_no=$1', [String(application_no).trim().toUpperCase()]);
+    if (exists.rows.length) return res.status(409).json({ success: false, message: 'Application already exists', data: null });
+    await pool.query('INSERT INTO applications(application_no,name,father_name,mobile,district,status) VALUES($1,$2,$3,$4,$5,$6)', [String(application_no).trim().toUpperCase(), String(name).trim(), String(father_name).trim(), cleanMobile, String(district).trim(), status]);
+    await logAction(req.user.username, req.user.role, 'create_application', String(application_no).trim().toUpperCase());
+    res.json({ success: true, message: 'Application created', data: null });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
 async function getStats(req, res) {
   try {
     const total = await pool.query('SELECT COUNT(*) FROM applications');
@@ -584,6 +603,6 @@ async function adminLogin(req, res, next) {
 module.exports = {
   uploadExcelApplications, previewExcel, importExcel, autoImportExcel,
   overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
-  getStats, getApplications, getApplicationById, updateApplicationStatus,
+  createApplication, getStats, getApplications, getApplicationById, updateApplicationStatus,
   getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
 };
