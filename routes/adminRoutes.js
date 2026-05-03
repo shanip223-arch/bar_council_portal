@@ -18,17 +18,25 @@ const storage = multer.diskStorage({
   }
 });
 
+const ALLOWED_EXTS  = ['.xlsx', '.xls'];
+const ALLOWED_MIMES = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/octet-stream',   // some browsers send this for .xls
+];
+
 const fileFilter = (req, file, cb) => {
-  const allowed = ['.xlsx', '.xls'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) return cb(null, true);
-  cb(new Error('Only .xlsx and .xls files are accepted'));
+  const ext  = path.extname(file.originalname).toLowerCase();
+  const mime = file.mimetype;
+  if (ALLOWED_EXTS.includes(ext) && ALLOWED_MIMES.includes(mime)) return cb(null, true);
+  if (ALLOWED_EXTS.includes(ext)) return cb(null, true);  // trust extension if mime ambiguous
+  cb(new Error('Invalid file type. Only .xlsx and .xls files are accepted.'));
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }   // 10 MB max
+  limits: { fileSize: 20 * 1024 * 1024 }   // 20 MB max
 });
 
 /* ── Multer error handler ── */
