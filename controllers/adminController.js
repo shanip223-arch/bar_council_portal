@@ -319,6 +319,8 @@ async function importExcel(req, res) {
       /* Mobile: keep only digits (handles spaces/dashes like "98765 43210") */
       const mobile         = String(r[mapping.mobile]      || '').trim().replace(/\D/g, '');
       const district       = String(r[mapping.district]    || '').trim();
+      /* Optional: dob — collected only if admin mapped it */
+      const dob            = mapping.dob ? String(r[mapping.dob] || '').trim() : null;
 
       /* skip fully empty rows */
       if (!application_no && !name && !father_name && !mobile && !district) { skipped++; continue; }
@@ -341,10 +343,18 @@ async function importExcel(req, res) {
         continue;
       }
 
-      await pool.query(
-        'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)',
-        [application_no, name, father_name, mobile, district]
-      );
+      /* Insert — include dob column only when mapped */
+      if (dob !== null) {
+        await pool.query(
+          'INSERT INTO applications(application_no,name,father_name,mobile,district,dob) VALUES($1,$2,$3,$4,$5,$6)',
+          [application_no, name, father_name, mobile, district, dob || null]
+        );
+      } else {
+        await pool.query(
+          'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)',
+          [application_no, name, father_name, mobile, district]
+        );
+      }
       inserted++;
     }
 

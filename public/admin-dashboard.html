@@ -419,37 +419,93 @@
   <!-- ── UPLOADS SECTION ────────────────────────────────── -->
   <div class="page-body admin-section" id="uploads">
 
-    <div class="panel" style="max-width:860px;margin-bottom:16px;">
+    <div class="panel" style="max-width:980px;margin-bottom:16px;">
       <div class="panel-header">
-        <span class="panel-title">📊 Upload Applications (Excel) — Auto Import</span>
+        <span class="panel-title">📊 Upload Applications (Excel)</span>
+        <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">Upload → Preview Columns → Map Fields → Import</span>
       </div>
       <div class="panel-body">
 
-        <!-- ── Upload form (always visible until import succeeds) ── -->
+        <!-- ── STEP 1: File upload ── -->
         <div id="xl-upload-area">
-          <!-- Accepted header hint -->
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12.5px;line-height:1.7;">
-            <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">📋 Accepted Excel Column Names (any order)</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 24px;">
-              <div><span style="color:#64748b;">Application No:</span> <code>Application No, App No, Enrollment No, Reg No</code></div>
-              <div><span style="color:#64748b;">Name:</span> <code>Name, Candidate Name, Full Name</code></div>
-              <div><span style="color:#64748b;">Father Name:</span> <code>Father Name, Father's Name, Guardian Name</code></div>
-              <div><span style="color:#64748b;">Mobile:</span> <code>Mobile, Mobile No, Phone, Contact No</code></div>
-              <div><span style="color:#64748b;">District:</span> <code>District, Dist, Zila</code></div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12.5px;line-height:1.8;">
+            <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">📋 Any column names are accepted — system auto-suggests mapping, you can override</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:3px 24px;color:#374151;">
+              <div><span style="color:#64748b;">Application No:</span> <code>Application No · App No · Enrollment No · Reg No</code></div>
+              <div><span style="color:#64748b;">Name:</span> <code>Name · Candidate Name · Full Name · Student Name</code></div>
+              <div><span style="color:#64748b;">Father Name:</span> <code>Father Name · Father's Name · Guardian Name · F Name</code></div>
+              <div><span style="color:#64748b;">Mobile:</span> <code>Mobile · Mobile No · Phone · Contact No · Mob</code></div>
+              <div><span style="color:#64748b;">District:</span> <code>District · Dist · Zila · Zilla</code></div>
+              <div><span style="color:#64748b;">DOB (optional):</span> <code>DOB · Date of Birth · Birth Date</code></div>
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Excel File (.xlsx / .xls) — max 20 MB</label>
             <input class="file-input" type="file" id="excelFile" accept=".xlsx,.xls"/>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" id="xlAutoBtn" onclick="doAutoImport()">⚡ Upload &amp; Auto-Import</button>
+            <button class="btn btn-primary" id="xlPreviewBtn" onclick="doExcelPreview()">🔍 Upload &amp; Preview Columns →</button>
             <div id="xlMsg" class="msg" style="margin-bottom:0;"></div>
           </div>
         </div>
 
-        <!-- ── Results panel (shown after import) ── -->
+        <!-- ── STEP 2: Column mapping + data preview ── -->
+        <div id="xl-step2" style="display:none;">
+          <!-- File info bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:13px;">
+              <strong id="xl-fname" style="color:var(--navy2);">file.xlsx</strong>
+              &nbsp;|&nbsp;
+              <span id="xl-rowcount" style="color:var(--green);font-weight:700;">0 rows</span>
+              &nbsp;|&nbsp;
+              <span id="xl-sheetname" style="color:var(--muted);font-size:12px;"></span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="resetExcelUpload()">← Start Over</button>
+          </div>
+
+          <!-- Column mapping table -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">📌 Column Mapping</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">
+              Auto-detection is shown as a suggestion — <strong>you can override any dropdown</strong>.
+              Required: <strong>application_no · name · father_name · mobile · district</strong>.
+              Optional: <strong>dob</strong>. Set <em>Ignore</em> for columns you don't need.
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Excel Column</th>
+                    <th>Auto-Detected As</th>
+                    <th style="min-width:210px;">Map To (editable ↓)</th>
+                    <th>Sample Value</th>
+                  </tr>
+                </thead>
+                <tbody id="xlMappingBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Data preview -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">👁️ Data Preview — First 5 Rows</div>
+            <div class="table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:max-content;">
+                <thead id="xlPreviewHead"></thead>
+                <tbody id="xlPreviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Action row -->
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="xlImportBtn" onclick="doMappedImport()">✅ Import Selected Fields</button>
+            <button class="btn btn-outline" onclick="resetExcelUpload()">← Start Over</button>
+            <div id="xlImportMsg" class="msg" style="margin-bottom:0;"></div>
+          </div>
+        </div>
+
+        <!-- ── STEP 3: Import results ── -->
         <div id="xl-result" style="display:none;"></div>
 
       </div>
@@ -1079,69 +1135,235 @@ async function doOverride() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   EXCEL AUTO-IMPORT  — single click, no column mapping
+   EXCEL IMPORT — Upload → Preview → Map Columns → Import
    ══════════════════════════════════════════════════════════ */
 
+/* Shared state across steps */
+let xlState = { filePath: null, columns: [], preview: [], totalRows: 0, suggestedFields: {} };
+
+/* Dropdown options — admin picks which system field each Excel column maps to */
+const XL_SYS_FIELDS = [
+  { value: '',               label: '— Ignore this column —' },
+  { value: 'application_no', label: 'application_no  (Required)' },
+  { value: 'name',           label: 'name  (Required)' },
+  { value: 'father_name',    label: 'father_name  (Required)' },
+  { value: 'mobile',         label: 'mobile  (Required)' },
+  { value: 'district',       label: 'district  (Required)' },
+  { value: 'dob',            label: 'dob  (Optional)' },
+];
+
+/* Name-based fallback detection (used when backend value-scan has no suggestion) */
+function xlNameDetect(col) {
+  const n = col.toLowerCase().replace(/[\s\-_\.]+/g, ' ').trim();
+  if (n.includes('application') || n.includes('app no') || n.includes('enroll') ||
+      n.includes('reg no')      || n.includes('roll'))                           return 'application_no';
+  if (n === 'name' || n.includes('candidate') || n.includes('full name') ||
+      n.includes('cand name')   || n.includes('student'))                        return 'name';
+  if (n.includes('father') || n.includes('f name') ||
+      n.includes('guardian')    || n.includes('parent'))                         return 'father_name';
+  if (n.includes('mobile') || n.includes('phone') ||
+      n.includes('contact')     || n.includes('mob'))                            return 'mobile';
+  if (n.includes('district') || n.includes('dist') || n.includes('zila'))       return 'district';
+  if (n.includes('dob') || n.includes('birth'))                                  return 'dob';
+  return '';
+}
+
+/* Reset to Step 1 */
 function resetExcelUpload() {
+  xlState = { filePath: null, columns: [], preview: [], totalRows: 0, suggestedFields: {} };
   const fi = document.getElementById('excelFile');
   if (fi) fi.value = '';
   document.getElementById('xl-upload-area').style.display = '';
+  document.getElementById('xl-step2').style.display  = 'none';
   document.getElementById('xl-result').style.display = 'none';
-  document.getElementById('xl-result').innerHTML = '';
+  document.getElementById('xl-result').innerHTML     = '';
   setFieldMsg('xlMsg', '', '');
+  setFieldMsg('xlImportMsg', '', '');
 }
 
-/* Download error rows as a CSV file */
-function downloadErrorReport(errors) {
-  const header = 'Row,Field,Raw Value,Cleaned Value,Error\n';
-  const rows   = errors.map(e =>
-    [e.row, e.field, '"' + String(e.raw || '').replace(/"/g,'""') + '"',
-     '"' + String(e.cleaned || '').replace(/"/g,'""') + '"',
-     '"' + String(e.error   || '').replace(/"/g,'""') + '"'].join(',')
-  ).join('\n');
-  const blob = new Blob([header + rows], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'excel_import_errors.csv'; a.click();
-  URL.revokeObjectURL(url);
+/* Build the column mapping table (Step 2) */
+function buildXlMappingTable(columns, preview, suggestedFields) {
+  suggestedFields = suggestedFields || {};
+  document.getElementById('xlMappingBody').innerHTML = columns.map((col, i) => {
+    const sample     = preview[0] ? esc(String(preview[0][col] ?? '')) : '—';
+    const patternHit = suggestedFields[col];          // from backend value-scan
+    const nameHit    = xlNameDetect(col);              // from header name heuristic
+    const auto       = patternHit || nameHit;
+
+    /* Badge colour: green = detected by value scan, amber = detected by name only */
+    let autoBadge = '<span style="color:var(--muted);font-size:12px;">—</span>';
+    let rowStyle  = '';
+    if (patternHit) {
+      autoBadge = `<span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;">✓ ${patternHit}</span>`;
+      rowStyle  = 'background:#f0fdf4;';
+    } else if (nameHit) {
+      autoBadge = `<span style="font-size:11px;font-weight:700;background:#d97706;color:#fff;padding:2px 8px;border-radius:4px;">~ ${nameHit}</span>`;
+      rowStyle  = 'background:#fffbeb;';
+    }
+
+    const opts = XL_SYS_FIELDS.map(f =>
+      `<option value="${f.value}"${f.value === auto ? ' selected' : ''}>${f.label}</option>`
+    ).join('');
+
+    return `<tr style="${rowStyle}">
+      <td style="font-weight:600;color:var(--navy2);">${esc(col)}</td>
+      <td>${autoBadge}</td>
+      <td>
+        <select class="form-select" id="xlmap_${i}" style="min-width:195px;"
+                onchange="onXlMapChange(${i})">${opts}</select>
+      </td>
+      <td style="font-size:12px;font-family:monospace;color:var(--muted);">${sample}</td>
+    </tr>`;
+  }).join('');
 }
 
-async function doAutoImport() {
+/* Build the data preview table (Step 2) */
+function buildXlPreviewTable(columns, preview) {
+  document.getElementById('xlPreviewHead').innerHTML =
+    '<tr>' + columns.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  document.getElementById('xlPreviewBody').innerHTML = preview.map(row =>
+    '<tr>' + columns.map(c =>
+      `<td style="font-size:12px;white-space:nowrap;">${esc(String(row[c] ?? ''))}</td>`
+    ).join('') + '</tr>'
+  ).join('');
+}
+
+/* Live validation when admin changes a dropdown to application_no */
+function onXlMapChange(idx) {
+  const sel = document.getElementById('xlmap_' + idx);
+  if (!sel || sel.value !== 'application_no') return;
+  const col     = xlState.columns[idx];
+  const APP_RE  = /^UP\d{5}\/\d{2}$/;
+  const samples = xlState.preview
+    .map(r => String(r[col] ?? '').trim().toUpperCase().replace(/\s+/g, ''))
+    .filter(v => v !== '');
+  const hits = samples.filter(v => APP_RE.test(v)).length;
+  if (samples.length && !hits) {
+    setFieldMsg('xlImportMsg',
+      `⚠️ Column "${col}" has no valid UP#####/YY values in preview. ` +
+      `Found: ${samples.slice(0,3).map(v => `"${v}"`).join(', ')} — Expected format: UP12345/25`,
+      'error');
+  } else if (hits) {
+    setFieldMsg('xlImportMsg',
+      `✅ "${col}" looks correct — ${hits}/${samples.length} preview rows match UP#####/YY.`,
+      'success');
+  }
+}
+
+/* ── STEP 1: Upload file → get columns + preview ── */
+async function doExcelPreview() {
   const fileInput = document.getElementById('excelFile');
   const file      = fileInput?.files[0];
-  const btn       = document.getElementById('xlAutoBtn');
-
+  const btn       = document.getElementById('xlPreviewBtn');
   if (!file) { setFieldMsg('xlMsg', '❌ Please select an .xlsx or .xls file first', 'error'); return; }
 
-  btn.disabled = true; btn.textContent = '⏳ Processing…';
+  btn.disabled = true; btn.textContent = '⏳ Reading file…';
   setFieldMsg('xlMsg', '', '');
-
   try {
     const form = new FormData();
     form.append('file', file);
-    const res = await AdminAPI.postForm('/api/admin/excel-auto-import', form);
-    const { total = 0, inserted = 0, skipped = 0, errors = [], detectedColumns = {}, sheetName = '' } = res.data || {};
+    const res = await AdminAPI.postForm('/api/admin/excel-preview', form);
+    const { columns, preview, totalRows, filePath, suggestedFields, sheetName } = res.data;
 
-    /* ── Build detected-columns summary ── */
-    const fieldLabel = { application_no: 'Application No', name: 'Name', father_name: 'Father Name', mobile: 'Mobile', district: 'District' };
-    const detectedRows = Object.entries(detectedColumns).map(([f, col]) =>
-      `<tr><td style="color:var(--muted);font-size:12px;">${fieldLabel[f] || f}</td>
-           <td style="font-weight:600;font-size:12px;color:var(--navy2);">${esc(col)}</td>
-           <td><span style="font-size:10px;background:#16a34a;color:#fff;padding:1px 6px;border-radius:3px;">✓ Detected</span></td>
-       </tr>`
+    xlState = { filePath, columns, preview, totalRows, suggestedFields: suggestedFields || {}, filename: file.name };
+
+    document.getElementById('xl-fname').textContent     = file.name;
+    document.getElementById('xl-rowcount').textContent  = totalRows + ' data rows';
+    document.getElementById('xl-sheetname').textContent = 'Sheet: ' + (sheetName || '—');
+
+    buildXlMappingTable(columns, preview, suggestedFields);
+    buildXlPreviewTable(columns, preview);
+
+    document.getElementById('xl-upload-area').style.display = 'none';
+    document.getElementById('xl-step2').style.display = '';
+  } catch(e) {
+    setFieldMsg('xlMsg', '❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Upload & Preview Columns →';
+  }
+}
+
+/* Download error CSV (client-side, no server round-trip) */
+function downloadErrorReport(errors) {
+  const header = 'Row,Field,Raw Value,Cleaned Value,Error\n';
+  const body   = errors.map(e =>
+    [e.row, e.field,
+     '"' + String(e.raw   || e.value || '').replace(/"/g, '""') + '"',
+     '"' + String(e.cleaned || '').replace(/"/g, '""') + '"',
+     '"' + String(e.error  || '').replace(/"/g, '""') + '"'
+    ].join(',')
+  ).join('\n');
+  const blob = new Blob([header + body], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'import_errors.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── STEP 2 → 3: Collect mapping from dropdowns → import ── */
+async function doMappedImport() {
+  const btn = document.getElementById('xlImportBtn');
+
+  /* Collect mapping from all dropdowns (skip ignored ones) */
+  const mapping = {};
+  xlState.columns.forEach((col, i) => {
+    const v = document.getElementById('xlmap_' + i)?.value;
+    if (v) mapping[v] = col;
+  });
+
+  /* Enforce all 5 required fields are mapped */
+  const REQUIRED = ['application_no', 'name', 'father_name', 'mobile', 'district'];
+  const missing  = REQUIRED.filter(f => !mapping[f]);
+  if (missing.length) {
+    setFieldMsg('xlImportMsg', '❌ Please map these required fields: ' + missing.join(', '), 'error');
+    return;
+  }
+
+  /* Frontend pre-check: warn if application_no column has no UP-format values */
+  const appCol = mapping.application_no;
+  if (appCol && xlState.preview.length) {
+    const APP_RE  = /^UP\d{5}\/\d{2}$/;
+    const samples = xlState.preview
+      .map(r => String(r[appCol] ?? '').trim().toUpperCase().replace(/\s+/g, ''))
+      .filter(v => v !== '');
+    const hits = samples.filter(v => APP_RE.test(v)).length;
+    if (samples.length && !hits) {
+      const go = confirm(
+        `Column "${appCol}" has no valid application numbers in the preview.\n\n` +
+        `Sample values found:\n  ${samples.slice(0,5).map(v => `"${v}"`).join('\n  ')}\n\n` +
+        `Expected format: UP12345/25\n\nProceed anyway?`
+      );
+      if (!go) return;
+    }
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ Importing…';
+  setFieldMsg('xlImportMsg', '', '');
+  try {
+    const res = await AdminAPI.post('/api/admin/excel-import', {
+      filePath: xlState.filePath,
+      mapping
+    });
+    const { inserted = 0, skipped = 0, errors = [] } = res.data || {};
+    const total = xlState.totalRows;
+
+    /* Summarise which fields were mapped */
+    const FIELD_LABELS = { application_no:'Application No', name:'Name', father_name:'Father Name',
+                           mobile:'Mobile', district:'District', dob:'DOB' };
+    const mappedChips = Object.entries(mapping).map(([f, col]) =>
+      `<span style="display:inline-block;margin:2px 4px;padding:2px 9px;background:#dbeafe;
+               border-radius:4px;font-size:11.5px;font-weight:600;color:#1d4ed8;">
+         ${FIELD_LABELS[f] || f} ← <em>${esc(col)}</em>
+       </span>`
     ).join('');
 
-    /* ── Render result card ── */
     document.getElementById('xl-result').innerHTML = `
-
-      <!-- File + sheet info -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
-        <div style="font-size:13px;font-weight:700;color:var(--navy2);">📄 ${esc(file.name)}</div>
-        ${sheetName ? `<div style="font-size:12px;color:var(--muted);">Sheet: <strong>${esc(sheetName)}</strong></div>` : ''}
-        <div style="font-size:12px;color:var(--muted);">Total rows: <strong>${total}</strong></div>
+      <!-- Mapped fields summary -->
+      <div style="margin-bottom:16px;font-size:12.5px;">
+        <span style="font-weight:700;color:var(--navy2);">Fields imported:</span> ${mappedChips}
       </div>
 
-      <!-- Stats row -->
+      <!-- Stats -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
         <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;">
           <div style="font-size:30px;font-weight:800;color:var(--navy2);">${total}</div>
@@ -1161,59 +1383,45 @@ async function doAutoImport() {
         </div>
       </div>
 
-      <!-- Detected columns table -->
-      <div style="margin-bottom:18px;">
-        <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:8px;">🔍 Auto-Detected Column Mapping</div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>System Field</th><th>Excel Column Used</th><th>Status</th></tr></thead>
-            <tbody>${detectedRows || '<tr><td colspan="3" style="color:var(--muted);text-align:center;">No columns detected</td></tr>'}</tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Error table + download -->
+      <!-- Error table or success banner -->
       ${errors.length ? `
         <div style="margin-bottom:18px;">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-            <div style="font-size:13px;font-weight:700;color:#dc2626;">⚠️ Error Report (${errors.length} rows)</div>
-            <button class="btn btn-outline btn-sm" onclick="downloadErrorReport(window._xlErrors)">⬇️ Download CSV</button>
+            <div style="font-size:13px;font-weight:700;color:#dc2626;">⚠️ Errors (${errors.length} rows skipped)</div>
+            <button class="btn btn-outline btn-sm" onclick="downloadErrorReport(window._xlErrors)">⬇️ Download Error CSV</button>
           </div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Row #</th><th>Field</th><th>Raw Value</th><th>Cleaned</th><th>Reason</th></tr></thead>
+              <thead><tr><th>Row</th><th>Field</th><th>Value</th><th>Reason</th></tr></thead>
               <tbody>${errors.map(e => `
                 <tr>
                   <td style="font-weight:600;">${e.row}</td>
                   <td style="color:var(--navy2);font-weight:600;">${esc(e.field || '—')}</td>
-                  <td style="font-family:monospace;font-size:11px;color:var(--muted);">${esc(e.raw || '—')}</td>
-                  <td style="font-family:monospace;font-size:11px;">${esc(e.cleaned || '—')}</td>
+                  <td style="font-family:monospace;font-size:11px;">${esc(e.value || e.raw || '—')}</td>
                   <td style="color:var(--red);font-size:12px;">${esc(e.error)}</td>
                 </tr>`).join('')}
               </tbody>
             </table>
           </div>
         </div>` : `
-        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#166534;font-weight:600;">
-          🎉 All valid rows were imported with no errors!
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px;
+                    margin-bottom:18px;font-size:13px;color:#166534;font-weight:600;">
+          🎉 All valid rows inserted — no errors!
         </div>`}
 
-      <!-- Action buttons -->
+      <!-- Actions -->
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="resetExcelUpload()">📤 Import Another File</button>
         <button class="btn btn-outline" onclick="showSection('applications')">📋 View Applications →</button>
       </div>`;
 
-    /* Store errors globally for the CSV download button */
     window._xlErrors = errors;
-
-    document.getElementById('xl-upload-area').style.display = 'none';
+    document.getElementById('xl-step2').style.display  = 'none';
     document.getElementById('xl-result').style.display = '';
-
   } catch(e) {
-    setFieldMsg('xlMsg', '❌ ' + e.message, 'error');
+    setFieldMsg('xlImportMsg', '❌ ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '⚡ Upload & Auto-Import';
+    btn.disabled = false; btn.textContent = '✅ Import Selected Fields';
   }
 }
 

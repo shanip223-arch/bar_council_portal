@@ -110,10 +110,11 @@ async function initDb() {
 
   /* ── Safe column additions for existing DBs ─────── */
   const safeCols = [
-    "ALTER TABLE users       ADD COLUMN IF NOT EXISTS active SMALLINT DEFAULT 1",
-    "ALTER TABLE objections  ADD COLUMN IF NOT EXISTS staff_remark TEXT DEFAULT ''",
-    "ALTER TABLE uploads     ADD COLUMN IF NOT EXISTS review_status VARCHAR(20) DEFAULT 'pending'",
-    "ALTER TABLE uploads     ADD COLUMN IF NOT EXISTS staff_remark TEXT DEFAULT ''"
+    "ALTER TABLE users         ADD COLUMN IF NOT EXISTS active SMALLINT DEFAULT 1",
+    "ALTER TABLE objections    ADD COLUMN IF NOT EXISTS staff_remark TEXT DEFAULT ''",
+    "ALTER TABLE uploads       ADD COLUMN IF NOT EXISTS review_status VARCHAR(20) DEFAULT 'pending'",
+    "ALTER TABLE uploads       ADD COLUMN IF NOT EXISTS staff_remark TEXT DEFAULT ''",
+    "ALTER TABLE applications  ADD COLUMN IF NOT EXISTS dob VARCHAR(30) DEFAULT NULL"
   ];
   for (const sql of safeCols) {
     try { await pool.query(sql); } catch (_) {}
