@@ -1,0 +1,93 @@
+You are building a secure Bar Council Certificate Portal using Node.js (Express) + static frontend.
+
+IMPORTANT REQUIREMENTS (DO NOT MISS ANY):
+
+1. PUBLIC vs ADMIN SEPARATION (VERY STRICT)
+- The homepage ("/") must NOT show any admin or staff login UI.
+- Public page should ONLY contain:
+  - Candidate OTP login
+  - Notices
+  - Certificate services
+- Admin and staff login must be completely removed from index.html
+
+2. CREATE A SEPARATE ADMIN ENTRY SYSTEM
+- Create a new route:
+  /admin → loads admin login page
+- This page must contain:
+  - Admin Login
+  - Staff Login
+- Do NOT expose this page inside the homepage UI
+
+3. CREATE A CLEAN ADMIN DASHBOARD FLOW
+- After login:
+  Admin → /admin-dashboard
+  Staff → /staff-dashboard (separate role-based access)
+
+4. ROUTE PROTECTION (CRITICAL)
+- If user tries:
+  /admin-dashboard बिना token → redirect to /admin
+  /staff-dashboard बिना token → redirect to /admin
+- Use localStorage tokens:
+  adminToken
+  staffToken
+
+5. FIX CURRENT BUG
+- Currently /admin is opening index page
+- Fix routing so:
+  /admin loads admin.html ONLY
+  / loads index.html ONLY
+
+6. FILE STRUCTURE (STRICT)
+public/
+  index.html          (ONLY public UI)
+  admin.html          (admin + staff login)
+  admin-dashboard.html
+  staff-dashboard.html
+
+assets/
+  main.js
+
+7. ADMIN DASHBOARD MUST INCLUDE:
+- Sidebar with:
+  Dashboard
+  Applications
+  Objections
+  Uploads
+  Staff
+  Logs
+  Settings
+
+8. ADD MISSING SECTIONS (IMPORTANT)
+Currently missing:
+- Objection Management Section
+- Upload Management Section
+
+Add both with:
+✔ tables
+✔ status update buttons
+✔ API integration placeholders
+
+9. FIX FILE UPLOAD ERROR
+- Current error: "File too large"
+- Increase upload limit in backend (at least 10MB)
+- Ensure multer/body-parser supports large files
+
+10. CLEAN UX RULE
+- No admin UI should be visible on homepage
+- Only a small button:
+  "Administrator Access" → /admin
+
+11. NO MERGED FILES
+- DO NOT mix frontend + backend in one file
+- Keep clean separation
+
+12. KEEP EXISTING APIs
+- Do NOT break existing routes
+- Only fix structure and routing
+
+OUTPUT REQUIREMENT:
+- Regenerate full working structure
+- Fix routing issue
+- Fix admin visibility issue
+- Add missing sections (objection + upload)
+- Ensure dashboards load properly

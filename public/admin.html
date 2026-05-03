@@ -3,80 +3,344 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Admin Login – UP Bar Council Portal</title>
-  <link rel="stylesheet" href="/assets/style.css"/>
+  <title>Admin Portal – UP Bar Council</title>
   <style>
-    .admin-login-body { min-height: 100vh; display: flex; flex-direction: column; background: #0f1c2e; }
-    .admin-login-center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 30px 16px; }
-    .admin-login-card { background: #fff; border-radius: 12px; width: 100%; max-width: 440px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
-    .admin-login-head { background: linear-gradient(135deg, #002060 0%, #003580 100%); padding: 28px 28px 20px; text-align: center; }
-    .admin-login-head .emblem { font-size: 44px; margin-bottom: 10px; }
-    .admin-login-head h1 { color: #fff; font-size: 18px; font-weight: 800; }
-    .admin-login-head .sub { color: rgba(255,255,255,.65); font-size: 12px; margin-top: 4px; }
-    .admin-login-head .tag { display: inline-block; background: #FF6600; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 99px; margin-top: 8px; letter-spacing: 1px; }
-    .admin-login-body-inner { padding: 28px; }
-    .form-note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #7c4a00; margin-bottom: 18px; }
-    .admin-foot { text-align: center; font-size: 11px; color: #64748b; padding: 14px; border-top: 1px solid #e2e8f0; }
-    .back-link { color: #003580; text-decoration: none; font-weight: 600; }
-    .back-link:hover { text-decoration: underline; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0b1a2e;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top strip ── */
+    .top-strip {
+      background: linear-gradient(90deg, #FF6600, #FF8800);
+      height: 5px;
+    }
+
+    /* ── Header ── */
+    .portal-header {
+      background: linear-gradient(135deg, #001840 0%, #002e6e 100%);
+      padding: 22px 24px 18px;
+      text-align: center;
+      border-bottom: 2px solid rgba(255,255,255,.08);
+    }
+    .portal-header .emblem { font-size: 40px; margin-bottom: 8px; }
+    .portal-header h1 { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: .3px; }
+    .portal-header .sub { color: rgba(255,255,255,.55); font-size: 12px; margin-top: 3px; }
+    .portal-header .access-tag {
+      display: inline-block;
+      background: #FF6600; color: #fff;
+      font-size: 9px; font-weight: 800; letter-spacing: 1.5px;
+      padding: 3px 12px; border-radius: 99px; margin-top: 10px; text-transform: uppercase;
+    }
+
+    /* ── Main ── */
+    .portal-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .cards-wrap {
+      width: 100%;
+      max-width: 820px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 620px) {
+      .cards-wrap { grid-template-columns: 1fr; }
+    }
+
+    /* ── Login card ── */
+    .login-card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0,0,0,.35);
+    }
+    .card-head {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .card-head.admin { background: linear-gradient(135deg, #002060, #0040a0); }
+    .card-head.staff { background: linear-gradient(135deg, #0d5f6e, #0e8c9e); }
+    .card-head .card-icon { font-size: 20px; }
+    .card-head .card-title { line-height: 1.3; }
+    .card-head .card-title small { display: block; font-size: 11px; font-weight: 400; opacity: .7; }
+
+    .card-body { padding: 20px; }
+
+    .card-note {
+      padding: 9px 12px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .card-note.admin { background: #eef2ff; border-left: 3px solid #002060; color: #1a2a5e; }
+    .card-note.staff { background: #edfcff; border-left: 3px solid #0d5f6e; color: #0a3d47; }
+
+    /* ── Form elements ── */
+    .f-group { margin-bottom: 14px; }
+    .f-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 5px;
+    }
+    .f-label .req { color: #dc2626; }
+    .f-input {
+      width: 100%;
+      border: 1.5px solid #d1d5db;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: #111;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .f-input:focus { border-color: #002060; box-shadow: 0 0 0 3px rgba(0,32,96,.1); }
+
+    /* ── Password toggle ── */
+    .pass-wrap { position: relative; }
+    .pass-wrap .f-input { padding-right: 40px; }
+    .eye-btn {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 15px; line-height: 1;
+    }
+
+    /* ── Captcha ── */
+    .captcha-row { display: flex; align-items: center; gap: 8px; }
+    .captcha-img {
+      background: #1a2e6e; color: #fff;
+      padding: 7px 14px; border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 16px; font-weight: 700; letter-spacing: 5px;
+      user-select: none; flex-shrink: 0;
+    }
+    .captcha-refresh {
+      background: none; border: 1.5px solid #ccc; border-radius: 5px;
+      padding: 5px 9px; cursor: pointer; font-size: 13px;
+    }
+    .captcha-refresh:hover { background: #f3f4f6; }
+    .captcha-input { max-width: 120px; }
+
+    /* ── Message ── */
+    .msg {
+      font-size: 12.5px; min-height: 18px; margin-bottom: 10px;
+      border-radius: 4px; padding: 0 2px;
+    }
+    .msg.error   { color: #dc2626; }
+    .msg.success { color: #16a34a; }
+
+    /* ── Button ── */
+    .btn-login {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      color: #fff;
+    }
+    .btn-login:hover  { opacity: .9; }
+    .btn-login:active { transform: scale(.99); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-login.admin { background: linear-gradient(135deg, #002060, #0040a0); }
+    .btn-login.staff { background: linear-gradient(135deg, #0d5f6e, #0e8c9e); }
+
+    .forgot { text-align: center; margin-top: 10px; font-size: 11px; color: #9ca3af; }
+
+    /* ── Footer ── */
+    .portal-footer {
+      text-align: center;
+      padding: 14px;
+      font-size: 11px;
+      color: #4b5563;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .portal-footer a { color: #6b82c4; text-decoration: none; font-weight: 600; }
+    .portal-footer a:hover { text-decoration: underline; }
   </style>
 </head>
-<body class="admin-login-body">
+<body>
 
-<div class="admin-login-center">
-  <div class="admin-login-card">
-    <div class="admin-login-head">
-      <div class="emblem">⚖️</div>
-      <h1>उत्तर प्रदेश बार काउंसिल</h1>
-      <div class="sub">Uttar Pradesh Bar Council — Admin Portal</div>
-      <div class="tag">🔐 AUTHORIZED ACCESS ONLY</div>
-    </div>
-    <div class="admin-login-body-inner">
-      <div class="form-note">
-        🔒 यह क्षेत्र केवल अधिकृत प्रशासकों और कर्मचारियों के लिए है।<br>
-        This area is restricted to authorized administrators and staff only.
-      </div>
+<div class="top-strip"></div>
 
-      <div class="form-group">
-        <label class="form-label" for="user">उपयोगकर्ता नाम <span class="required">*</span></label>
-        <input class="form-input" id="user" placeholder="Username" autocomplete="username"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="pass">पासवर्ड <span class="required">*</span></label>
-        <div style="position:relative;">
-          <input class="form-input" id="pass" type="password" placeholder="••••••••" autocomplete="current-password" style="padding-right:40px;"/>
-          <button onclick="togglePass()" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;" id="toggleEye">👁️</button>
+<div class="portal-header">
+  <div class="emblem">⚖️</div>
+  <h1>उत्तर प्रदेश बार काउंसिल</h1>
+  <div class="sub">Uttar Pradesh Bar Council — Restricted Administrative Portal</div>
+  <div class="access-tag">🔐 Authorized Access Only</div>
+</div>
+
+<div class="portal-main">
+  <div class="cards-wrap">
+
+    <!-- ══════════ ADMIN LOGIN ══════════ -->
+    <div class="login-card">
+      <div class="card-head admin">
+        <div class="card-icon">🛡️</div>
+        <div class="card-title">
+          Admin Login
+          <small>व्यवस्थापक लॉगिन — Full access</small>
         </div>
       </div>
+      <div class="card-body">
+        <div class="card-note admin">
+          🔒 पूर्ण प्रशासक पहुँच — सभी अनुभाग उपलब्ध हैं।<br>
+          Full admin access — all sections available.
+        </div>
 
-      <div id="userLoginMsg" class="msg" style="margin-bottom:12px;"></div>
+        <div class="f-group">
+          <label class="f-label" for="adminUser">Username <span class="req">*</span></label>
+          <input class="f-input" id="adminUser" placeholder="Admin username" autocomplete="username"/>
+        </div>
 
-      <button class="btn btn-primary btn-full btn-lg" id="userLoginBtn" onclick="loginUser()">
-        🔑 Admin Login
-      </button>
+        <div class="f-group">
+          <label class="f-label" for="adminPass">Password <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input class="f-input" id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="eye-btn" id="adminEye" onclick="toggleAdminPass()" type="button">👁️</button>
+          </div>
+        </div>
 
-      <div style="text-align:center; margin-top:18px; font-size:12px; color:#94a3b8;">
-        पासवर्ड भूल गये? कार्यालय से संपर्क करें | Forgot password? Contact office.
+        <div class="f-group">
+          <label class="f-label">Captcha <span class="req">*</span></label>
+          <div class="captcha-row">
+            <div class="captcha-img" id="adminCaptchaText">K7M2X</div>
+            <button class="captcha-refresh" onclick="refreshAdminCaptcha()" title="Refresh">🔄</button>
+            <input class="f-input captcha-input" id="adminCaptchaInput" placeholder="Enter captcha" maxlength="6"/>
+          </div>
+        </div>
+
+        <div id="adminLoginMsg" class="msg"></div>
+        <button class="btn-login admin" id="adminLoginBtn" onclick="doAdminLoginWithCaptcha()">
+          🔑 Admin Login
+        </button>
+        <div class="forgot">पासवर्ड भूल गये? कार्यालय से संपर्क करें | Forgot? Contact office.</div>
       </div>
     </div>
-    <div class="admin-foot">
-      <a href="/" class="back-link">← Candidate Portal / अभ्यर्थी पोर्टल</a>
-      &nbsp;|&nbsp;
-      © 2025 UP Bar Council
+
+    <!-- ══════════ STAFF LOGIN ══════════ -->
+    <div class="login-card">
+      <div class="card-head staff">
+        <div class="card-icon">👤</div>
+        <div class="card-title">
+          Staff Login
+          <small>कर्मचारी लॉगिन — Limited access</small>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-note staff">
+          📋 सीमित पहुँच — अपलोड, आपत्तियाँ और डैशबोर्ड उपलब्ध।<br>
+          Limited access — uploads, objections &amp; dashboard available.
+        </div>
+
+        <div class="f-group">
+          <label class="f-label" for="staffUser">Username <span class="req">*</span></label>
+          <input class="f-input" id="staffUser" placeholder="Staff username" autocomplete="username"/>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label" for="staffPass">Password <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input class="f-input" id="staffPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="eye-btn" id="staffEye" onclick="toggleStaffPass()" type="button">👁️</button>
+          </div>
+        </div>
+
+        <!-- Spacer to align buttons at same height -->
+        <div style="height:56px;"></div>
+
+        <div id="staffLoginMsg" class="msg"></div>
+        <button class="btn-login staff" id="staffLoginBtn" onclick="staffLogin()">
+          🔑 Staff Login
+        </button>
+        <div class="forgot">पासवर्ड भूल गये? कार्यालय से संपर्क करें | Forgot? Contact office.</div>
+      </div>
     </div>
-  </div>
+
+  </div><!-- /cards-wrap -->
+</div><!-- /portal-main -->
+
+<div class="portal-footer">
+  <a href="/">← Candidate Portal / अभ्यर्थी पोर्टल</a>
+  &nbsp;|&nbsp;
+  © 2025 उत्तर प्रदेश बार काउंसिल | All Rights Reserved
 </div>
 
 <script src="/assets/main.js"></script>
 <script>
-let passVisible = false;
-function togglePass() {
-  passVisible = !passVisible;
-  document.getElementById('pass').type = passVisible ? 'text' : 'password';
-  document.getElementById('toggleEye').textContent = passVisible ? '🙈' : '👁️';
+/* ── Admin captcha state ── */
+const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+let adminCaptcha = 'K7M2X';
+
+function refreshAdminCaptcha() {
+  let s = '';
+  for (let i = 0; i < 5; i++) s += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
+  adminCaptcha = s;
+  document.getElementById('adminCaptchaText').textContent = s;
+  document.getElementById('adminCaptchaInput').value = '';
 }
-document.getElementById('pass').addEventListener('keydown', e => { if (e.key === 'Enter') loginUser(); });
-document.getElementById('user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pass').focus(); });
+
+function doAdminLoginWithCaptcha() {
+  const entered = (document.getElementById('adminCaptchaInput').value || '').trim().toUpperCase();
+  if (entered !== adminCaptcha) {
+    setMsg('adminLoginMsg', '❌ कैप्चा गलत है। पुनः प्रयास करें | Incorrect captcha.', 'error');
+    refreshAdminCaptcha();
+    return;
+  }
+  doAdminLogin();
+}
+
+/* ── Password visibility toggles ── */
+let adminPassVisible = false;
+function toggleAdminPass() {
+  adminPassVisible = !adminPassVisible;
+  document.getElementById('adminPass').type = adminPassVisible ? 'text' : 'password';
+  document.getElementById('adminEye').textContent = adminPassVisible ? '🙈' : '👁️';
+}
+
+let staffPassVisible = false;
+function toggleStaffPass() {
+  staffPassVisible = !staffPassVisible;
+  document.getElementById('staffPass').type = staffPassVisible ? 'text' : 'password';
+  document.getElementById('staffEye').textContent = staffPassVisible ? '🙈' : '👁️';
+}
+
+/* ── Enter-key shortcuts ── */
+document.getElementById('adminUser').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('adminPass').focus();
+});
+document.getElementById('adminPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('adminCaptchaInput').focus();
+});
+document.getElementById('adminCaptchaInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAdminLoginWithCaptcha();
+});
+document.getElementById('staffUser').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('staffPass').focus();
+});
+document.getElementById('staffPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') staffLogin();
+});
+
+/* Generate fresh captcha on every page load */
+refreshAdminCaptcha();
 </script>
 </body>
 </html>

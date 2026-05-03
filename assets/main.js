@@ -64,26 +64,28 @@ function showFlash(id, text, type) {
   const token      = getToken();
   const hasPriv    = !!(adminToken || staffToken);
 
-  /* /admin — redirect away if already authenticated */
+  /* /admin login page — redirect away if already authenticated */
   if (path === '/admin') {
     if (adminToken) { window.location.href = '/admin-dashboard'; return; }
     if (staffToken) { window.location.href = '/admin-dashboard'; return; }
   }
 
-  /* Admin dashboard — accessible by admin OR staff */
+  /* Admin dashboard — accessible by adminToken OR staffToken */
   if (path === '/admin-dashboard') {
     if (!adminToken && !staffToken) { window.location.href = '/admin'; return; }
   }
 
-  /* Candidate dashboard */
+  /* Candidate dashboard — requires candidate token */
   if (path === '/dashboard') {
     if (!token) { window.location.href = '/'; return; }
   }
 
-  /* Staff area — requires staffToken OR adminToken */
+  /* Staff sub-pages — require staffToken OR adminToken */
   if (['/staff-dashboard', '/staff-objections', '/staff-uploads', '/staff-panel'].includes(path)) {
     if (!hasPriv) { window.location.href = '/admin'; return; }
   }
+
+  /* Homepage — if admin/staff lands here, they are NOT redirected (it's the public page) */
 })();
 
 // ── API wrappers (candidate portal) ────────────────────────
