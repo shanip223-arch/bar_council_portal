@@ -57,5 +57,10 @@ app.use((err, req, res, next) => {
 
 cron.schedule('0 2 * * *', async () => { await runBackup('full'); });
 
-const PORT = process.env.PORT || 5000;
-initDb().then(() => app.listen(PORT, '0.0.0.0', () => console.log(`Server running at http://0.0.0.0:${PORT}`)));
+const PORT = process.env.PORT || 3000;
+initDb()
+  .then(() => app.listen(PORT, '0.0.0.0', () => console.log(`Server running at http://0.0.0.0:${PORT}`)))
+  .catch((error) => {
+    console.error('Server failed to start:', error.message);
+    process.exit(1);
+  });

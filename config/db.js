@@ -2,13 +2,32 @@ const { Pool } = require('pg');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+const useDatabaseUrl = !!process.env.DATABASE_URL;
+const pool = useDatabaseUrl
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
+  : new Pool({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
+      ssl: false
+    });
+
+pool.on('connect', () => {
+  console.log('Database connected');
+});
+
+pool.on('error', (err) => {
+  console.error('Database pool error:', err.message);
 });
 
 async function initDb() {
-  await pool.query(`CREATE TABLE IF NOT EXISTS users (
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -17,7 +36,7 @@ async function initDb() {
     active SMALLINT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS applications (
+    await pool.query(`CREATE TABLE IF NOT EXISTS applications (
     id SERIAL PRIMARY KEY,
     application_no VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(150) NOT NULL,
@@ -32,7 +51,7 @@ async function initDb() {
     paid_unlock_until TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS objections (
+    await pool.query(`CREATE TABLE IF NOT EXISTS objections (
     id SERIAL PRIMARY KEY,
     application_id INT NOT NULL,
     type VARCHAR(100) NOT NULL,
@@ -44,7 +63,7 @@ async function initDb() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS uploads (
+    await pool.query(`CREATE TABLE IF NOT EXISTS uploads (
     id SERIAL PRIMARY KEY,
     application_id INT NOT NULL,
     objection_id INT NULL,
@@ -59,7 +78,7 @@ async function initDb() {
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS certificates (
+    await pool.query(`CREATE TABLE IF NOT EXISTS certificates (
     id SERIAL PRIMARY KEY,
     application_id INT NOT NULL,
     file_name VARCHAR(255) NOT NULL,
@@ -68,7 +87,7 @@ async function initDb() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS otp_codes (
+    await pool.query(`CREATE TABLE IF NOT EXISTS otp_codes (
     id SERIAL PRIMARY KEY,
     application_no VARCHAR(20) NOT NULL,
     otp VARCHAR(6) NOT NULL,
@@ -76,7 +95,7 @@ async function initDb() {
     used SMALLINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS duplicate_requests (
+    await pool.query(`CREATE TABLE IF NOT EXISTS duplicate_requests (
     id SERIAL PRIMARY KEY,
     application_no VARCHAR(20) NOT NULL,
     reason TEXT NOT NULL,
@@ -85,13 +104,13 @@ async function initDb() {
     issue_code VARCHAR(10) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS backup_logs (
+    await pool.query(`CREATE TABLE IF NOT EXISTS backup_logs (
     id SERIAL PRIMARY KEY,
     backup_type VARCHAR(20) NOT NULL,
     file_path VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS action_logs (
+    await pool.query(`CREATE TABLE IF NOT EXISTS action_logs (
     id SERIAL PRIMARY KEY,
     actor VARCHAR(100) NOT NULL,
     role VARCHAR(20) NOT NULL,
@@ -118,6 +137,11 @@ async function initDb() {
   ];
   for (const sql of safeCols) {
     try { await pool.query(sql); } catch (_) {}
+  }
+    console.log('Database initialization complete');
+  } catch (error) {
+    console.error('Database initialization failed:', error.message);
+    throw error;
   }
 }
 
