@@ -1134,7 +1134,7 @@ const SYS_FIELDS = [
   { value: 'district',       label: 'district  (Required)' },
 ];
 
-/* Auto-detect a system field from an Excel column name */
+/* Fallback: name-based field detection (used only if backend pattern scan missed it) */
 function autoDetectField(col) {
   const n = col.toLowerCase().replace(/[\s\-\.]/g, '_');
   if (n.includes('application') || n.includes('app_no') || n.includes('reg'))  return 'application_no';
@@ -1143,6 +1143,31 @@ function autoDetectField(col) {
   if (n.includes('mobile') || n.includes('phone') || n.includes('contact'))     return 'mobile';
   if (n.includes('district') || n.includes('dist') || n.includes('zila'))       return 'district';
   return '';
+}
+
+/* Frontend clean mirrors backend cleanAppNo for preview validation */
+function frontendCleanAppNo(raw) {
+  return String(raw).trim().toUpperCase().replace(/\s+/g, '').replace(/['"]/g, '');
+}
+
+/* Called when admin changes a dropdown — warns if the application_no column looks wrong */
+function onMappingChange(idx) {
+  const sel = document.getElementById('map_' + idx);
+  if (!sel || sel.value !== 'application_no') return;
+  const col = xlState.columns[idx];
+  const APP_RE = /^UP\d{5}\/\d{2}$/;
+  const sampleVals = xlState.preview.map(r => frontendCleanAppNo(String(r[col] ?? '')));
+  const matches    = sampleVals.filter(v => APP_RE.test(v)).length;
+  if (sampleVals.some(v => v !== '') && matches === 0) {
+    setFieldMsg('importMsg',
+      `⚠️ Column "${col}" does not appear to contain valid application numbers. ` +
+      `Sample values: ${sampleVals.slice(0,3).map(v=>'"'+v+'"').join(', ')} — expected format: UP12345/25`,
+      'error');
+  } else if (matches > 0) {
+    setFieldMsg('importMsg',
+      `✅ Column "${col}" looks correct — ${matches} of ${sampleVals.filter(v=>v!=='').length} preview rows match UP#####/YY format.`,
+      'success');
+  }
 }
 
 function setStepIndicator(active) {
@@ -1165,16 +1190,35 @@ function resetExcelUpload() {
   setStepIndicator(1);
 }
 
-function buildMappingTable(columns, preview) {
+function buildMappingTable(columns, preview, suggestedFields) {
+  /* suggestedFields: { colName → systemField } from backend value-pattern scan */
+  suggestedFields = suggestedFields || {};
   document.getElementById('mappingBody').innerHTML = columns.map((col, i) => {
     const sample = preview[0] ? esc(String(preview[0][col] ?? '')) : '—';
-    const auto   = autoDetectField(col);
-    const opts   = SYS_FIELDS.map(f =>
+
+    /* Priority: backend value-scan > name-based heuristic */
+    const patternHit = suggestedFields[col];
+    const nameHit    = autoDetectField(col);
+    const auto       = patternHit || nameHit;
+
+    const opts = SYS_FIELDS.map(f =>
       `<option value="${f.value}"${f.value === auto ? ' selected' : ''}>${f.label}</option>`
     ).join('');
-    return `<tr>
-      <td style="font-weight:600;color:var(--navy2);">${esc(col)}</td>
-      <td><select class="form-select" id="map_${i}" style="min-width:210px;">${opts}</select></td>
+
+    /* Visual indicator of how the auto-selection was made */
+    let badge = '';
+    let rowBg = '';
+    if (patternHit) {
+      badge = `<span style="margin-left:6px;font-size:10px;background:#16a34a;color:#fff;padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;">✓ Value match</span>`;
+      rowBg = 'background:#f0fdf4;';
+    } else if (nameHit) {
+      badge = `<span style="margin-left:6px;font-size:10px;background:#d97706;color:#fff;padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;">~ Name match</span>`;
+      rowBg = 'background:#fffbeb;';
+    }
+
+    return `<tr style="${rowBg}">
+      <td style="font-weight:600;color:var(--navy2);">${esc(col)}${badge}</td>
+      <td><select class="form-select" id="map_${i}" style="min-width:210px;" onchange="onMappingChange(${i})">${opts}</select></td>
       <td style="color:var(--muted);font-size:12px;font-family:monospace;">${sample}</td>
     </tr>`;
   }).join('');
@@ -1202,13 +1246,13 @@ async function doExcelPreview() {
     const form = new FormData();
     form.append('file', file);
     const res = await AdminAPI.postForm('/api/admin/excel-preview', form);
-    const { columns, preview, totalRows, filePath } = res.data;
+    const { columns, preview, totalRows, filePath, suggestedFields } = res.data;
 
-    xlState = { filePath, columns, preview, totalRows };
+    xlState = { filePath, columns, preview, totalRows, suggestedFields: suggestedFields || {} };
     document.getElementById('xl-filename').textContent  = file.name;
     document.getElementById('xl-totalrows').textContent = totalRows + ' rows found';
 
-    buildMappingTable(columns, preview);
+    buildMappingTable(columns, preview, suggestedFields);
     buildPreviewTable(columns, preview);
 
     document.getElementById('xl-step1').style.display = 'none';
@@ -1237,6 +1281,28 @@ async function doExcelImport() {
   if (missing.length) {
     setFieldMsg('importMsg', '❌ Please map: ' + missing.join(', '), 'error');
     return;
+  }
+
+  /* ── Frontend pre-check: does the selected application_no column actually
+     contain UP#####/YY values in the preview rows?
+     Catches wrong mapping BEFORE sending to server.                         ── */
+  const appNoCol = mapping['application_no'];
+  if (appNoCol && xlState.preview.length) {
+    const APP_RE     = /^UP\d{5}\/\d{2}$/;
+    const sampleVals = xlState.preview
+      .map(r => frontendCleanAppNo(String(r[appNoCol] ?? '')))
+      .filter(v => v !== '');
+    const matches = sampleVals.filter(v => APP_RE.test(v)).length;
+    if (sampleVals.length > 0 && matches === 0) {
+      const proceed = confirm(
+        'Warning: the column "' + appNoCol + '" does not contain valid application numbers in the preview.\n\n' +
+        'Sample values found:\n  ' + sampleVals.slice(0, 5).map(v => '"' + v + '"').join('\n  ') + '\n\n' +
+        'Expected format: UP12345/25\n\n' +
+        'This column does not appear to hold application numbers.\n' +
+        'Do you still want to proceed with this mapping?'
+      );
+      if (!proceed) return;
+    }
   }
 
   btn.disabled = true; btn.textContent = '⏳ Importing…';

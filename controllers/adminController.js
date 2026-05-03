@@ -34,6 +34,29 @@ async function uploadExcelApplications(req, res) {
   } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
+/* ── Smart value cleaning for application numbers ──────────
+   Handles hidden Unicode chars, extra spaces, lowercase, quotes.
+   The "P" bug is caused by these invisible artefacts in some
+   Excel exports — this cleans them before any validation.      */
+function cleanAppNo(raw) {
+  return String(raw)
+    .trim()
+    .toUpperCase()
+    .replace(/[\u200B-\u200D\uFEFF\u00A0\u2060]/g, '') // zero-width + non-breaking space
+    .replace(/\s+/g, '')                                 // collapse all whitespace
+    .replace(/['"]/g, '');                               // stray quote chars
+}
+
+/* ── Scan all rows of a column; return fraction matching regex ── */
+function columnMatchRate(rows, col, re) {
+  const vals = rows.map(r => cleanAppNo(String(r[col] || ''))).filter(v => v.length > 0);
+  if (!vals.length) return 0;
+  return vals.filter(v => re.test(v)).length / vals.length;
+}
+
+const APP_NO_RE = /^UP\d{5}\/\d{2}$/;
+const MOBILE_RE = /^\d{10}$/;
+
 /* ── Phase 1: Upload & Preview ── */
 async function previewExcel(req, res) {
   try {
@@ -43,12 +66,33 @@ async function previewExcel(req, res) {
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
     if (!rows.length) return res.status(400).json({ success: false, message: 'Excel file is empty or has no data rows', data: null });
+
     const columns = Object.keys(rows[0]);
     const preview = rows.slice(0, 5);
+
+    /* ── Debug: print to server console ── */
+    console.log('\n[Excel Debug] ─────────────────────────────────');
+    console.log('[Excel Debug] Sheet:', sheetName, '| Total rows:', rows.length);
+    console.log('[Excel Debug] Columns:', columns);
+    console.log('[Excel Debug] First 5 rows:\n', JSON.stringify(preview, null, 2));
+
+    /* ── Value-pattern-based column detection ──────────────────
+       Scans actual cell VALUES (not just column names) to find
+       which column contains application numbers / mobiles.       */
+    const suggestedFields = {};
+    for (const col of columns) {
+      const appRate    = columnMatchRate(rows, col, APP_NO_RE);
+      const mobileRate = columnMatchRate(rows, col, MOBILE_RE);
+      if      (appRate    >= 0.5) suggestedFields[col] = 'application_no';
+      else if (mobileRate >= 0.5) suggestedFields[col] = 'mobile';
+    }
+    console.log('[Excel Debug] Pattern-detected suggestions:', suggestedFields);
+    console.log('[Excel Debug] ─────────────────────────────────\n');
+
     res.json({
       success: true,
       message: `Parsed ${rows.length} rows from sheet "${sheetName}"`,
-      data: { columns, preview, totalRows: rows.length, filePath: req.file.path, sheetName }
+      data: { columns, preview, totalRows: rows.length, filePath: req.file.path, sheetName, suggestedFields }
     });
   } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
@@ -66,16 +110,51 @@ async function importExcel(req, res) {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
 
+    /* ── Debug ── */
+    console.log('\n[Excel Import] ─────────────────────────────────');
+    console.log('[Excel Import] Mapping:', JSON.stringify(mapping));
+    console.log('[Excel Import] Sample row (row 0):', JSON.stringify(rows[0]));
+    console.log('[Excel Import] application_no column → "' + mapping.application_no + '"');
+    console.log('[Excel Import] First 5 raw values from that column:',
+      rows.slice(0, 5).map(r => r[mapping.application_no]));
+    console.log('[Excel Import] First 5 cleaned values:',
+      rows.slice(0, 5).map(r => cleanAppNo(String(r[mapping.application_no] || ''))));
+
+    /* ── Pre-scan: abort if <10% of non-empty rows have valid application_no ──
+       Prevents a wrong column mapping from silently inserting garbage.         */
+    const nonEmptyRows = rows.filter(r => cleanAppNo(String(r[mapping.application_no] || '')) !== '');
+    if (nonEmptyRows.length > 0) {
+      const validCount = nonEmptyRows.filter(r => APP_NO_RE.test(cleanAppNo(String(r[mapping.application_no] || '')))).length;
+      const validPct   = validCount / nonEmptyRows.length;
+      console.log(`[Excel Import] Pre-scan: ${validCount}/${nonEmptyRows.length} rows valid (${(validPct * 100).toFixed(1)}%)`);
+
+      if (validPct < 0.10) {
+        const sampleVals = nonEmptyRows.slice(0, 5).map(r => r[mapping.application_no]);
+        console.log('[Excel Import] ABORTED — invalid mapping. Sample values:', sampleVals);
+        return res.status(400).json({
+          success: false,
+          message: `Invalid mapping selected — only ${Math.round(validPct * 100)}% of rows in column "${mapping.application_no}" match the UP#####/YY format. The selected column does not contain valid application numbers.`,
+          data: {
+            inserted: 0, skipped: 0,
+            errors: [{ row: '—', field: 'application_no', value: String(sampleVals[0] ?? ''), error: `Column "${mapping.application_no}" has no valid application numbers. Expected format: UP12345/25` }],
+            debug: { column: mapping.application_no, sampleRaw: sampleVals }
+          }
+        });
+      }
+    }
+
     let inserted = 0, skipped = 0;
     const errors = [];
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const application_no = String(r[mapping.application_no] || '').trim();
-      const name           = String(r[mapping.name]           || '').trim();
-      const father_name    = String(r[mapping.father_name]    || '').trim();
-      const mobile         = String(r[mapping.mobile]         || '').trim();
-      const district       = String(r[mapping.district]       || '').trim();
+      /* Apply smart cleaning: trim + uppercase + strip hidden chars */
+      const application_no = cleanAppNo(String(r[mapping.application_no] || ''));
+      const name           = String(r[mapping.name]        || '').trim();
+      const father_name    = String(r[mapping.father_name] || '').trim();
+      /* Mobile: keep only digits (handles spaces/dashes like "98765 43210") */
+      const mobile         = String(r[mapping.mobile]      || '').trim().replace(/\D/g, '');
+      const district       = String(r[mapping.district]    || '').trim();
 
       /* skip fully empty rows */
       if (!application_no && !name && !father_name && !mobile && !district) { skipped++; continue; }
@@ -104,6 +183,9 @@ async function importExcel(req, res) {
       );
       inserted++;
     }
+
+    console.log(`[Excel Import] Done: inserted=${inserted}, skipped=${skipped}, errors=${errors.length}`);
+    console.log('[Excel Import] ─────────────────────────────────\n');
 
     await logAction(req.user.username, 'admin', 'excel_import',
       `inserted=${inserted}, skipped=${skipped}, errors=${errors.length}`);
