@@ -4,7 +4,8 @@ const path    = require('path');
 const auth    = require('../middleware/authMiddleware');
 const role    = require('../middleware/roleMiddleware');
 const {
-  uploadExcelApplications, overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
+  uploadExcelApplications, previewExcel, importExcel,
+  overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
   getStats, getApplications, getApplicationById, updateApplicationStatus,
   getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
 } = require('../controllers/adminController');
@@ -68,6 +69,8 @@ router.get('/alerts',             auth, role('admin', 'staff'), getAlerts);
 
 router.post('/upload-excel',      auth, role('admin'), handleUpload, uploadExcelApplications);
 router.post('/excel-upload',      auth, role('admin'), handleUpload, uploadExcelApplications);
+router.post('/excel-preview',     auth, role('admin'), handleUpload, previewExcel);
+router.post('/excel-import',      auth, role('admin'), importExcel);
 router.post('/override-upload',   auth, role('admin'), overrideUpload);
 router.post('/backup',            auth, role('admin'), runManualBackup);
 router.post('/restore',           auth, role('admin'), restoreManualBackup);

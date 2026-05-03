@@ -4,12 +4,13 @@ const { validateApplicationNo, validateMobile } = require('../utils/validator');
 const { runBackup, restoreBackup } = require('../services/backupService');
 const { logAction } = require('../utils/logger');
 
+/* ── Legacy direct-upload (kept for backward compat) ── */
 async function uploadExcelApplications(req, res) {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'Excel file required', data: null });
     const workbook = XLSX.readFile(req.file.path);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
     let inserted = 0;
     const errors = [];
     for (let i = 0; i < rows.length; i++) {
@@ -30,6 +31,87 @@ async function uploadExcelApplications(req, res) {
     }
     await logAction(req.user.username, 'admin', 'excel_upload', `inserted=${inserted}, errors=${errors.length}`);
     res.json({ success: true, message: `Inserted ${inserted} records`, data: { inserted, errors } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+/* ── Phase 1: Upload & Preview ── */
+async function previewExcel(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'Excel file required', data: null });
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+    if (!rows.length) return res.status(400).json({ success: false, message: 'Excel file is empty or has no data rows', data: null });
+    const columns = Object.keys(rows[0]);
+    const preview = rows.slice(0, 5);
+    res.json({
+      success: true,
+      message: `Parsed ${rows.length} rows from sheet "${sheetName}"`,
+      data: { columns, preview, totalRows: rows.length, filePath: req.file.path, sheetName }
+    });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+/* ── Phase 2: Import with column mapping ── */
+async function importExcel(req, res) {
+  try {
+    const { filePath, mapping } = req.body;
+    if (!filePath || !mapping)
+      return res.status(400).json({ success: false, message: 'filePath and mapping are required', data: null });
+    if (!mapping.application_no)
+      return res.status(400).json({ success: false, message: 'application_no field mapping is required', data: null });
+
+    const workbook = XLSX.readFile(filePath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+
+    let inserted = 0, skipped = 0;
+    const errors = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const application_no = String(r[mapping.application_no] || '').trim();
+      const name           = String(r[mapping.name]           || '').trim();
+      const father_name    = String(r[mapping.father_name]    || '').trim();
+      const mobile         = String(r[mapping.mobile]         || '').trim();
+      const district       = String(r[mapping.district]       || '').trim();
+
+      /* skip fully empty rows */
+      if (!application_no && !name && !father_name && !mobile && !district) { skipped++; continue; }
+
+      if (!validateApplicationNo(application_no)) {
+        errors.push({ row: i + 2, field: 'application_no', value: application_no, error: 'Invalid format — expected UP#####/YY' });
+        continue;
+      }
+      if (!validateMobile(mobile)) {
+        errors.push({ row: i + 2, field: 'mobile', value: mobile, error: 'Invalid mobile number (10 digits required)' });
+        continue;
+      }
+      if (!name)        { errors.push({ row: i + 2, field: 'name',        value: name,        error: 'Required field is empty' }); continue; }
+      if (!father_name) { errors.push({ row: i + 2, field: 'father_name', value: father_name, error: 'Required field is empty' }); continue; }
+      if (!district)    { errors.push({ row: i + 2, field: 'district',    value: district,    error: 'Required field is empty' }); continue; }
+
+      const dup = await pool.query('SELECT id FROM applications WHERE application_no=$1', [application_no]);
+      if (dup.rows.length) {
+        errors.push({ row: i + 2, field: 'application_no', value: application_no, error: 'Duplicate — already exists in database' });
+        continue;
+      }
+
+      await pool.query(
+        'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)',
+        [application_no, name, father_name, mobile, district]
+      );
+      inserted++;
+    }
+
+    await logAction(req.user.username, 'admin', 'excel_import',
+      `inserted=${inserted}, skipped=${skipped}, errors=${errors.length}`);
+    res.json({
+      success: true,
+      message: `Import complete — ${inserted} inserted, ${skipped} skipped, ${errors.length} errors`,
+      data: { inserted, skipped, errors }
+    });
   } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
@@ -244,7 +326,8 @@ async function adminLogin(req, res, next) {
 }
 
 module.exports = {
-  uploadExcelApplications, overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
+  uploadExcelApplications, previewExcel, importExcel,
+  overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
   getStats, getApplications, getApplicationById, updateApplicationStatus,
   getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
 };

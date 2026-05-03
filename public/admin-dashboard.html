@@ -419,16 +419,78 @@
   <!-- ── UPLOADS SECTION ────────────────────────────────── -->
   <div class="page-body admin-section" id="uploads">
 
-    <div class="panel" style="max-width:720px;margin-bottom:16px;">
-      <div class="panel-header"><span class="panel-title">📊 Upload Applications (Excel)</span></div>
+    <div class="panel" style="max-width:960px;margin-bottom:16px;">
+      <div class="panel-header">
+        <span class="panel-title">📊 Upload Applications (Excel) — Column Mapping Import</span>
+      </div>
       <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Excel File (.xlsx / .xls) — max 10 MB</label>
-          <input class="file-input" type="file" id="excelFile" accept=".xlsx,.xls"/>
+
+        <!-- Step indicator -->
+        <div style="display:flex;margin-bottom:20px;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+          <div id="xl-ind-1" style="flex:1;padding:9px 6px;text-align:center;font-size:12px;font-weight:700;background:var(--navy2);color:#fff;">① Select File</div>
+          <div id="xl-ind-2" style="flex:1;padding:9px 6px;text-align:center;font-size:12px;font-weight:700;background:#e2e8f0;color:#64748b;">② Map Columns</div>
+          <div id="xl-ind-3" style="flex:1;padding:9px 6px;text-align:center;font-size:12px;font-weight:700;background:#e2e8f0;color:#64748b;">③ Import Results</div>
         </div>
-        <button class="btn btn-primary" id="excelBtn" onclick="doExcelUpload()">📤 Upload Excel</button>
-        <div id="excelMsg" class="msg" style="margin-top:10px;"></div>
-        <div class="output-box" id="excelOut" style="margin-top:10px;"></div>
+
+        <!-- ── STEP 1: File upload ── -->
+        <div id="xl-step1">
+          <div class="form-group">
+            <label class="form-label">Excel File (.xlsx / .xls) — max 20 MB</label>
+            <input class="file-input" type="file" id="excelFile" accept=".xlsx,.xls"/>
+            <div class="form-hint" style="margin-top:6px;">
+              Any column headers are accepted. You will map them to system fields in the next step.
+            </div>
+          </div>
+          <button class="btn btn-primary" id="excelPreviewBtn" onclick="doExcelPreview()">📤 Upload &amp; Preview →</button>
+          <div id="excelMsg" class="msg" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- ── STEP 2: Column mapping + data preview ── -->
+        <div id="xl-step2" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:13px;">
+              <strong id="xl-filename" style="color:var(--navy2);">file.xlsx</strong>
+              &nbsp;|&nbsp;
+              <span id="xl-totalrows" style="color:var(--green);font-weight:700;">0 rows</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="resetExcelUpload()">← Start Over</button>
+          </div>
+
+          <!-- Mapping table -->
+          <div style="margin-bottom:18px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:6px;">📌 Map Excel Columns → System Fields</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">
+              Required: <strong>application_no, name, father_name, mobile, district</strong> — all five must be mapped before importing.
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Excel Column</th><th style="min-width:220px;">→ System Field</th><th>Sample Value</th></tr></thead>
+                <tbody id="mappingBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Data preview -->
+          <div style="margin-bottom:18px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:6px;">👁️ Data Preview — First 5 Rows</div>
+            <div class="table-wrap" style="overflow-x:auto;">
+              <table class="data-table">
+                <thead id="previewHead"></thead>
+                <tbody id="previewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="excelImportBtn" onclick="doExcelImport()">✅ Import Data</button>
+            <button class="btn btn-outline" onclick="resetExcelUpload()">← Start Over</button>
+            <div id="importMsg" class="msg" style="margin-bottom:0;"></div>
+          </div>
+        </div>
+
+        <!-- ── STEP 3: Import results ── -->
+        <div id="xl-step3" style="display:none;"></div>
+
       </div>
     </div>
 
@@ -1055,37 +1117,182 @@ async function doOverride() {
   } catch(e) { setFieldMsg('ovMsg','❌ '+e.message,'error'); }
 }
 
-async function doExcelUpload() {
-  const fileInput = document.getElementById('excelFile');
-  const file = fileInput.files[0];
-  const btn  = document.getElementById('excelBtn');
-  const out  = document.getElementById('excelOut');
+/* ══════════════════════════════════════════════════════════
+   EXCEL IMPORT — 3-Step: Upload → Map Columns → Import
+   ══════════════════════════════════════════════════════════ */
 
-  if (!file) { setFieldMsg('excelMsg', '❌ Please select an .xlsx or .xls file', 'error'); return; }
+/* State shared across steps */
+let xlState = { filePath: null, columns: [], preview: [], totalRows: 0 };
 
-  // Loading state — do NOT set Content-Type; browser sets multipart/form-data + boundary automatically
-  btn.disabled = true; btn.textContent = '⏳ Uploading…';
+/* System fields that can be mapped to */
+const SYS_FIELDS = [
+  { value: '',              label: '— Ignore this column —' },
+  { value: 'application_no', label: 'application_no  (Required)' },
+  { value: 'name',           label: 'name  (Required)' },
+  { value: 'father_name',    label: 'father_name  (Required)' },
+  { value: 'mobile',         label: 'mobile  (Required)' },
+  { value: 'district',       label: 'district  (Required)' },
+];
+
+/* Auto-detect a system field from an Excel column name */
+function autoDetectField(col) {
+  const n = col.toLowerCase().replace(/[\s\-\.]/g, '_');
+  if (n.includes('application') || n.includes('app_no') || n.includes('reg'))  return 'application_no';
+  if (n === 'name' || n.includes('candidate') || n.includes('cand_name'))       return 'name';
+  if (n.includes('father') || n.includes('f_name') || n.includes('guardian'))   return 'father_name';
+  if (n.includes('mobile') || n.includes('phone') || n.includes('contact'))     return 'mobile';
+  if (n.includes('district') || n.includes('dist') || n.includes('zila'))       return 'district';
+  return '';
+}
+
+function setStepIndicator(active) {
+  [1, 2, 3].forEach(n => {
+    const el = document.getElementById('xl-ind-' + n);
+    if (!el) return;
+    el.style.background = n === active ? 'var(--navy2)' : '#e2e8f0';
+    el.style.color       = n === active ? '#fff'         : '#64748b';
+  });
+}
+
+function resetExcelUpload() {
+  xlState = { filePath: null, columns: [], preview: [], totalRows: 0 };
+  const fi = document.getElementById('excelFile');
+  if (fi) fi.value = '';
+  document.getElementById('xl-step1').style.display = '';
+  document.getElementById('xl-step2').style.display = 'none';
+  document.getElementById('xl-step3').style.display = 'none';
   setFieldMsg('excelMsg', '', '');
-  out.classList.remove('show'); out.textContent = '';
+  setStepIndicator(1);
+}
 
+function buildMappingTable(columns, preview) {
+  document.getElementById('mappingBody').innerHTML = columns.map((col, i) => {
+    const sample = preview[0] ? esc(String(preview[0][col] ?? '')) : '—';
+    const auto   = autoDetectField(col);
+    const opts   = SYS_FIELDS.map(f =>
+      `<option value="${f.value}"${f.value === auto ? ' selected' : ''}>${f.label}</option>`
+    ).join('');
+    return `<tr>
+      <td style="font-weight:600;color:var(--navy2);">${esc(col)}</td>
+      <td><select class="form-select" id="map_${i}" style="min-width:210px;">${opts}</select></td>
+      <td style="color:var(--muted);font-size:12px;font-family:monospace;">${sample}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildPreviewTable(columns, preview) {
+  document.getElementById('previewHead').innerHTML =
+    '<tr>' + columns.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  document.getElementById('previewBody').innerHTML = preview.map(row =>
+    '<tr>' + columns.map(c =>
+      `<td style="font-size:12px;">${esc(String(row[c] ?? ''))}</td>`
+    ).join('') + '</tr>'
+  ).join('');
+}
+
+async function doExcelPreview() {
+  const fileInput = document.getElementById('excelFile');
+  const file = fileInput?.files[0];
+  const btn  = document.getElementById('excelPreviewBtn');
+  if (!file) { setFieldMsg('excelMsg', '❌ Please select an .xlsx or .xls file first', 'error'); return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Reading file…';
+  setFieldMsg('excelMsg', '', '');
   try {
     const form = new FormData();
-    form.append('file', file);               // key must match upload.single('file')
+    form.append('file', file);
+    const res = await AdminAPI.postForm('/api/admin/excel-preview', form);
+    const { columns, preview, totalRows, filePath } = res.data;
 
-    // AdminAPI.postForm uses: fetch(url, { method:'POST', headers: adminHeaders(), body: formData })
-    // adminHeaders() returns ONLY { Authorization: 'Bearer <token>' } — no Content-Type
-    const res = await AdminAPI.postForm('/api/admin/upload-excel', form);
+    xlState = { filePath, columns, preview, totalRows };
+    document.getElementById('xl-filename').textContent  = file.name;
+    document.getElementById('xl-totalrows').textContent = totalRows + ' rows found';
 
-    setFieldMsg('excelMsg', '✅ ' + res.message, 'success');
-    const { inserted = 0, errors = [] } = res.data || {};
-    out.textContent = `Inserted : ${inserted} record(s)\nErrors   : ${errors.length}\n\n`
-      + (errors.length ? JSON.stringify(errors, null, 2) : '');
-    out.classList.add('show');
-    fileInput.value = '';                    // reset picker
+    buildMappingTable(columns, preview);
+    buildPreviewTable(columns, preview);
+
+    document.getElementById('xl-step1').style.display = 'none';
+    document.getElementById('xl-step2').style.display = '';
+    setStepIndicator(2);
   } catch(e) {
     setFieldMsg('excelMsg', '❌ ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '📤 Upload Excel';
+    btn.disabled = false; btn.textContent = '📤 Upload & Preview →';
+  }
+}
+
+async function doExcelImport() {
+  const btn = document.getElementById('excelImportBtn');
+
+  /* Build mapping object from dropdowns */
+  const mapping = {};
+  xlState.columns.forEach((col, i) => {
+    const val = document.getElementById('map_' + i)?.value;
+    if (val) mapping[val] = col;
+  });
+
+  /* Validate all required fields are mapped */
+  const REQUIRED = ['application_no', 'name', 'father_name', 'mobile', 'district'];
+  const missing  = REQUIRED.filter(f => !mapping[f]);
+  if (missing.length) {
+    setFieldMsg('importMsg', '❌ Please map: ' + missing.join(', '), 'error');
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ Importing…';
+  setFieldMsg('importMsg', '', '');
+  try {
+    const res = await AdminAPI.post('/api/admin/excel-import', {
+      filePath: xlState.filePath,
+      mapping
+    });
+    const { inserted = 0, skipped = 0, errors = [] } = res.data || {};
+
+    /* Build results panel */
+    document.getElementById('xl-step3').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:18px;text-align:center;">
+          <div style="font-size:36px;font-weight:800;color:#16a34a;">${inserted}</div>
+          <div style="font-size:12px;font-weight:700;color:#166534;margin-top:4px;">✅ Inserted</div>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:18px;text-align:center;">
+          <div style="font-size:36px;font-weight:800;color:#d97706;">${skipped}</div>
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-top:4px;">⏭️ Skipped (empty rows)</div>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:18px;text-align:center;">
+          <div style="font-size:36px;font-weight:800;color:#dc2626;">${errors.length}</div>
+          <div style="font-size:12px;font-weight:700;color:#991b1b;margin-top:4px;">❌ Errors / Skipped</div>
+        </div>
+      </div>
+      ${errors.length ? `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:8px;">⚠️ Error Details</div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Row</th><th>Field</th><th>Value</th><th>Reason</th></tr></thead>
+              <tbody>${errors.map(e => `
+                <tr>
+                  <td>${e.row}</td>
+                  <td style="font-weight:600;color:var(--navy2);">${esc(e.field || '—')}</td>
+                  <td style="font-family:monospace;font-size:11px;">${esc(e.value || '—')}</td>
+                  <td style="color:var(--red);">${esc(e.error)}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>` : ''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="resetExcelUpload()">📤 Upload Another File</button>
+        <button class="btn btn-outline" onclick="showSection('applications')">📋 View Applications →</button>
+      </div>`;
+
+    document.getElementById('xl-step2').style.display = 'none';
+    document.getElementById('xl-step3').style.display = '';
+    setStepIndicator(3);
+  } catch(e) {
+    setFieldMsg('importMsg', '❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✅ Import Data';
   }
 }
 
