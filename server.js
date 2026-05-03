@@ -46,6 +46,7 @@ app.get('/duplicate',       (req, res) => res.sendFile(path.join(__dirname, 'pub
 app.get('/staff-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/staff-dashboard.html')));
 app.get('/staff-objections',(req, res) => res.sendFile(path.join(__dirname, 'public/staff-objections.html')));
 app.get('/staff-uploads',   (req, res) => res.sendFile(path.join(__dirname, 'public/staff-uploads.html')));
+app.get('/staff-panel',     (req, res) => res.sendFile(path.join(__dirname, 'public/staff-panel.html')));
 app.get('/main',            (req, res) => res.redirect('/'));
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found', data: null }));

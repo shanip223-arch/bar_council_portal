@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Staff Control Panel – UP Bar Council</title>
+<link rel="stylesheet" href="/assets/admin.css"/>
+<style>
+/* ── Mobile tab bar ─────────────────────────────── */
+.mobile-tabs {
+  display: none;
+  background: #0f1c2e;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.mobile-tabs button {
+  flex: 1; padding: 12px 4px; background: none; border: none;
+  color: #94a3b8; font-size: 12px; font-weight: 600; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all .15s;
+}
+.mobile-tabs button.active { color: #FF6600; border-bottom-color: #FF6600; }
+@media (max-width: 768px) {
+  .sidebar { display: none !important; }
+  .mobile-tabs { display: flex; }
+  .main-content { margin-left: 0 !important; }
+  .top-header .page-subtitle { display: none; }
+}
+
+/* ── User badge ─────────────────────────────────── */
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 20px; padding: 5px 12px 5px 6px;
+}
+.user-badge .ub-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #003580; color: #fff; font-size: 12px;
+  font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.user-badge .ub-name { font-size: 12px; font-weight: 700; color: #1e293b; }
+.user-badge .ub-role { font-size: 10px; color: #64748b; text-transform: capitalize; }
+
+/* ── Objection remark bubble ─────────────────────── */
+.remark-bubble {
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 6px; padding: 8px 12px;
+  font-size: 13px; color: #374151; white-space: pre-wrap;
+}
+.remark-bubble.staff { background: #f0fdf4; border-color: #86efac; }
+
+/* ── File preview ────────────────────────────────── */
+.file-preview-wrap {
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 8px; overflow: hidden; margin-bottom: 14px;
+  text-align: center;
+}
+.file-preview-wrap img { max-width: 100%; max-height: 340px; object-fit: contain; display: block; margin: auto; }
+.file-preview-wrap .no-preview { padding: 30px; color: #64748b; font-size: 13px; }
+
+/* ── Action row ──────────────────────────────────── */
+.action-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Scrollable table on mobile ──────────────────── */
+@media (max-width: 600px) {
+  .data-table { font-size: 12px; }
+  .data-table th, .data-table td { padding: 8px 8px; }
+  .action-row { flex-direction: column; }
+}
+
+/* ── Upload status row ───────────────────────────── */
+.upl-status-pending  { color: #92400e; }
+.upl-status-approved { color: #166534; }
+.upl-status-rejected { color: #991b1b; }
+
+/* ── Overdue highlight ───────────────────────────── */
+tr.overdue td { background: #fff5f5 !important; }
+
+/* ── Global flash (top of page) ─────────────────── */
+#globalFlash {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  padding: 12px 20px; font-size: 14px; font-weight: 700;
+  text-align: center; display: none; border-bottom: 2px solid;
+}
+#globalFlash.success { background: #dcfce7; color: #166534; border-color: #86efac; }
+#globalFlash.error   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<!-- Global flash toast -->
+<div id="globalFlash"></div>
+
+<div class="admin-layout">
+
+  <!-- ════ SIDEBAR (desktop) ════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">⚖️</div>
+      <div class="brand-text">
+        <div class="name">UP Bar Council</div>
+        <div class="sub">Staff Control Panel</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">Sections</div>
+    <nav>
+      <button class="nav-link active" id="sideNav-dashboard"   onclick="switchSection('dashboard')">
+        <span class="nav-icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-link" id="sideNav-objections" onclick="switchSection('objections')">
+        <span class="nav-icon">📋</span> Objections
+        <span class="nav-badge" id="badge-obj">0</span>
+      </button>
+      <button class="nav-link" id="sideNav-uploads" onclick="switchSection('uploads')">
+        <span class="nav-icon">📁</span> Upload Review
+        <span class="nav-badge" id="badge-upl">0</span>
+      </button>
+    </nav>
+
+    <div style="flex:1;"></div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" id="sideAvatar">S</div>
+        <div>
+          <div id="sideName"  style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div>
+          <div id="sideRole"  style="color:#64748b;font-size:10px;">staff</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="doLogout()">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ════ MAIN ══════════════════════════════════════ -->
+  <div class="main-content">
+
+    <!-- Mobile tab bar -->
+    <div class="mobile-tabs">
+      <button id="mTab-dashboard"   class="active" onclick="switchSection('dashboard')">🏠 Dashboard</button>
+      <button id="mTab-objections"  onclick="switchSection('objections')">📋 Objections</button>
+      <button id="mTab-uploads"     onclick="switchSection('uploads')">📁 Uploads</button>
+    </div>
+
+    <!-- Top header -->
+    <header class="top-header" style="position:sticky;top:0;z-index:100;">
+      <span class="page-title">⚖️ Staff Control Panel</span>
+      <span class="page-subtitle">| UP Bar Council</span>
+      <div class="header-spacer"></div>
+      <div class="user-badge" id="headerBadge">
+        <div class="ub-avatar" id="hdrAvatar">S</div>
+        <div><div class="ub-name" id="hdrName">Staff</div><div class="ub-role" id="hdrRole">staff</div></div>
+      </div>
+      <button class="header-btn danger" onclick="doLogout()">🚪 Logout</button>
+    </header>
+
+    <!-- ── DASHBOARD SECTION ─────────────────────── -->
+    <div class="page-body section" id="section-dashboard">
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card">
+          <div class="stat-info"><div class="label">Pending Objections</div><div class="value" id="d-pobj">…</div><div class="sub">Awaiting action</div></div>
+          <div class="stat-icon ic-yellow">📋</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><div class="label">Docs Pending Review</div><div class="value" id="d-pupl">…</div><div class="sub">To verify</div></div>
+          <div class="stat-icon ic-blue">📁</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><div class="label">Completed Today</div><div class="value" id="d-today">…</div><div class="sub">My actions</div></div>
+          <div class="stat-icon ic-green">✅</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+        <!-- Recent objections -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📋 Recent Objections</span>
+            <button class="btn btn-outline btn-sm" onclick="switchSection('objections')">View All →</button>
+          </div>
+          <div class="panel-body" id="dash-recent-obj">
+            <div class="loading-overlay">⏳</div>
+          </div>
+        </div>
+        <!-- Recent uploads -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📁 Recent Uploads</span>
+            <button class="btn btn-outline btn-sm" onclick="switchSection('uploads')">View All →</button>
+          </div>
+          <div class="panel-body" id="dash-recent-upl">
+            <div class="loading-overlay">⏳</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header"><span class="panel-title">🕒 Recent Activity (My last 5 actions)</span></div>
+        <div class="panel-body" id="dash-activity">
+          <div class="loading-overlay">⏳</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OBJECTIONS SECTION ────────────────────── -->
+    <div class="page-body section" id="section-objections" style="display:none;">
+      <div class="panel">
+        <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
+          <span class="panel-title">📋 Objection Management</span>
+          <div class="toolbar" style="flex:1;justify-content:flex-end;">
+            <div class="search-box">
+              <span>🔍</span>
+              <input id="obj-search" placeholder="App No / Name…" oninput="debounceFn('obj')" style="width:150px;"/>
+            </div>
+            <div class="filter-btns">
+              <button class="filter-btn active" onclick="setObjFilter('all',this)">All</button>
+              <button class="filter-btn" onclick="setObjFilter('pending',this)">Pending</button>
+              <button class="filter-btn" onclick="setObjFilter('overdue',this)" style="color:#dc2626;">Overdue ⚠️</button>
+              <button class="filter-btn" onclick="setObjFilter('resolved',this)">Resolved</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th><th>App No</th><th>Name</th><th>Type</th><th>Status</th><th>Deadline</th><th>Docs</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="obj-tbody"><tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="obj-pager"></div>
+      </div>
+    </div>
+
+    <!-- ── UPLOADS SECTION ───────────────────────── -->
+    <div class="page-body section" id="section-uploads" style="display:none;">
+      <div class="panel">
+        <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
+          <span class="panel-title">📁 Upload Review</span>
+          <div class="toolbar" style="flex:1;justify-content:flex-end;">
+            <div class="search-box">
+              <span>🔍</span>
+              <input id="upl-search" placeholder="App No / Name…" oninput="debounceFn('upl')" style="width:150px;"/>
+            </div>
+            <div class="filter-btns">
+              <button class="filter-btn active" onclick="setUplFilter('all',this)">All</button>
+              <button class="filter-btn" onclick="setUplFilter('pending',this)">Pending</button>
+              <button class="filter-btn" onclick="setUplFilter('approved',this)" style="color:#16a34a;">Approved</button>
+              <button class="filter-btn" onclick="setUplFilter('rejected',this)" style="color:#dc2626;">Rejected</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th><th>App No</th><th>Candidate</th><th>Doc Type</th><th>File</th><th>Status</th><th>Staff Note</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="upl-tbody"><tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="upl-pager"></div>
+      </div>
+    </div>
+
+  </div><!-- main-content -->
+</div><!-- admin-layout -->
+
+<!-- ════ OBJECTION DETAIL MODAL ═════════════════════ -->
+<div class="modal-overlay" id="objModal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <span class="modal-title" id="objModal-title">Objection Details</span>
+      <button class="modal-close" onclick="closeModal('objModal')">✕</button>
+    </div>
+    <div class="modal-body" id="objModal-body"></div>
+    <div class="modal-footer" id="objModal-footer">
+      <button class="btn btn-outline" onclick="closeModal('objModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ UPLOAD REVIEW MODAL ════════════════════════ -->
+<div class="modal-overlay" id="uplModal">
+  <div class="modal" style="max-width:660px;">
+    <div class="modal-header">
+      <span class="modal-title" id="uplModal-title">Document Review</span>
+      <button class="modal-close" onclick="closeModal('uplModal')">✕</button>
+    </div>
+    <div class="modal-body" id="uplModal-body"></div>
+    <div class="modal-footer" id="uplModal-footer">
+      <button class="btn btn-outline" onclick="closeModal('uplModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/main.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   staff-panel.html — page-local controller
+   ═══════════════════════════════════════════════════════ */
+
+// ── State ──────────────────────────────────────────────
+const SP = {
+  objFilter: 'all', objPage: 1,
+  uplFilter: 'all', uplPage: 1,
+  objDebounce: null, uplDebounce: null,
+  currentObj: null, currentUpl: null
+};
+
+// ── Helpers ────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function decodeJwt(t) { try { return JSON.parse(atob(t.split('.')[1])); } catch(e) { return {}; } }
+function overdueClass(deadline, resolved) { return !resolved && new Date(deadline) < new Date() ? 'overdue' : ''; }
+
+function gFlash(msg, type) {
+  const el = document.getElementById('globalFlash');
+  el.textContent = msg;
+  el.className = type || 'success';
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 3800);
+}
+
+function btnLoad(id, loading, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.disabled = loading;
+  if (label) el.textContent = loading ? '⏳ …' : label;
+}
+
+function pagerHtml(total, page, limit, onPage) {
+  const pages = Math.ceil(total / limit);
+  if (pages <= 1) return '';
+  let h = `<button class="page-btn" ${page<=1?'disabled':''} onclick="${onPage}(${page-1})">‹</button>`;
+  for (let i=1;i<=pages;i++) {
+    if (i===1||i===pages||Math.abs(i-page)<=1) h+=`<button class="page-btn${i===page?' active':''}" onclick="${onPage}(${i})">${i}</button>`;
+    else if (Math.abs(i-page)===2) h+=`<span style="padding:0 4px;color:#94a3b8">…</span>`;
+  }
+  h += `<button class="page-btn" ${page>=pages?'disabled':''} onclick="${onPage}(${page+1})">›</button>`;
+  return h;
+}
+
+function statusBadge(status) {
+  const map = { pending:'badge-pending', approved:'badge-approved', rejected:'badge-rejected', resolved:'badge-approved', under_review:'badge-under_review', objection:'badge-objection' };
+  return `<span class="badge ${map[status]||'badge-pending'}">${esc(status)}</span>`;
+}
+
+// ── Section switcher ───────────────────────────────────
+const SECTIONS = ['dashboard','objections','uploads'];
+function switchSection(id) {
+  SECTIONS.forEach(s => {
+    document.getElementById('section-'+s).style.display = s===id ? '' : 'none';
+    const sn = document.getElementById('sideNav-'+s);
+    const mt = document.getElementById('mTab-'+s);
+    if (sn) sn.classList.toggle('active', s===id);
+    if (mt) mt.classList.toggle('active', s===id);
+  });
+  if (id==='dashboard')   loadStaffDashboard();
+  if (id==='objections')  loadObjections();
+  if (id==='uploads')     loadUploads();
+}
+
+// ── Modal open/close ───────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.getElementById('objModal').addEventListener('click', e => { if(e.target.id==='objModal') closeModal('objModal'); });
+document.getElementById('uplModal').addEventListener('click', e => { if(e.target.id==='uplModal') closeModal('uplModal'); });
+
+// ── Logout ─────────────────────────────────────────────
+function doLogout() {
+  localStorage.removeItem('staffToken');
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('portalRole');
+  window.location.href = '/admin';
+}
+
+// ── Filters / search ───────────────────────────────────
+function setObjFilter(f, el) {
+  SP.objFilter = f; SP.objPage = 1;
+  document.querySelectorAll('#section-objections .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  loadObjections();
+}
+function setUplFilter(f, el) {
+  SP.uplFilter = f; SP.uplPage = 1;
+  document.querySelectorAll('#section-uploads .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  loadUploads();
+}
+function debounceFn(type) {
+  clearTimeout(type==='obj' ? SP.objDebounce : SP.uplDebounce);
+  const t = setTimeout(() => { type==='obj' ? (SP.objPage=1,loadObjections()) : (SP.uplPage=1,loadUploads()); }, 350);
+  if (type==='obj') SP.objDebounce=t; else SP.uplDebounce=t;
+}
+function objGoPage(p) { SP.objPage=p; loadObjections(); }
+function uplGoPage(p) { SP.uplPage=p; loadUploads(); }
+
+// ══════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadStaffDashboard() {
+  try {
+    const res = await StaffAPI.get('/api/staff/dashboard');
+    const { stats, recent_objections=[], recent_uploads=[], recent_logs=[] } = res.data;
+
+    document.getElementById('d-pobj').textContent  = stats.pending_objections ?? 0;
+    document.getElementById('d-pupl').textContent  = stats.pending_uploads    ?? 0;
+    document.getElementById('d-today').textContent = stats.completed_today    ?? 0;
+    document.getElementById('badge-obj').textContent = stats.pending_objections ?? 0;
+    document.getElementById('badge-upl').textContent = stats.pending_uploads    ?? 0;
+
+    // Recent objections mini-list
+    const oEl = document.getElementById('dash-recent-obj');
+    oEl.innerHTML = recent_objections.length ? recent_objections.slice(0,5).map(o => {
+      const over = !o.resolved && new Date(o.deadline)<new Date();
+      return `<div class="recent-app">
+        <div class="recent-avatar">${esc((o.name||'?')[0].toUpperCase())}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="recent-name">${esc(o.application_no)}</div>
+          <div class="recent-no">${esc(o.type)} · Due ${fmtDate(o.deadline)}</div>
+        </div>
+        ${statusBadge(o.resolved?'resolved':over?'overdue':'pending')}
+      </div>`;
+    }).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><p>No objections</p></div>';
+
+    // Recent uploads mini-list
+    const uEl = document.getElementById('dash-recent-upl');
+    uEl.innerHTML = recent_uploads.length ? recent_uploads.slice(0,5).map(u => `
+      <div class="recent-app">
+        <div class="recent-avatar">${esc((u.name||'?')[0].toUpperCase())}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="recent-name">${esc(u.application_no)}</div>
+          <div class="recent-no">${esc(u.doc_type)} · ${fmtDate(u.uploaded_at)}</div>
+        </div>
+        ${statusBadge(u.review_status||'pending')}
+      </div>
+    `).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><p>No uploads</p></div>';
+
+    // Activity
+    const aEl = document.getElementById('dash-activity');
+    aEl.innerHTML = recent_logs.length ? recent_logs.slice(0,5).map(l => `
+      <div class="log-item">
+        <span style="font-size:14px;">🔵</span>
+        <span class="log-action" style="flex:1;">${esc(l.action)}${l.details?' — <span class="log-detail">'+esc(l.details)+'</span>':''}</span>
+        <span class="log-time">${fmtDateTime(l.created_at)}</span>
+      </div>
+    `).join('') : '<div class="empty-state"><div class="empty-icon">🕒</div><p>No recent activity</p></div>';
+
+  } catch(e) { gFlash('❌ Dashboard load failed: '+e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════
+// OBJECTIONS
+// ══════════════════════════════════════════════════════
+async function loadObjections() {
+  const search = document.getElementById('obj-search').value.trim();
+  const tbody  = document.getElementById('obj-tbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr>';
+  try {
+    const url = `/api/staff/objections?filter=${SP.objFilter}&search=${encodeURIComponent(search)}&page=${SP.objPage}&limit=20`;
+    const res = await StaffAPI.get(url);
+    const { objections=[], total=0, page=1, limit=20 } = res.data;
+    if (!objections.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>No objections found</p></div></td></tr>';
+      document.getElementById('obj-pager').innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = objections.map(o => {
+      const over = !o.resolved && new Date(o.deadline)<new Date();
+      const badge = o.resolved ? statusBadge('resolved') : over ? statusBadge('overdue') : statusBadge('pending');
+      return `<tr class="${over&&!o.resolved?'overdue':''}">
+        <td><b>#${o.id}</b></td>
+        <td><code style="font-size:11px;">${esc(o.application_no)}</code></td>
+        <td class="truncate">${esc(o.name)}</td>
+        <td style="font-size:12px;">${esc(o.type)}</td>
+        <td>${badge}</td>
+        <td style="font-size:12px;${over&&!o.resolved?'color:#dc2626;font-weight:700;':''}">${fmtDate(o.deadline)}</td>
+        <td style="text-align:center;">${o.upload_count??0}</td>
+        <td>
+          <div class="action-row">
+            <button class="btn btn-outline btn-xs" onclick='openObjModal(${JSON.stringify(o).replace(/'/g,"&#39;")})'>👁 View</button>
+            ${!o.resolved
+              ? `<button class="btn btn-success btn-xs" onclick="quickObjAction(${o.id},'resolve','')">✅ Resolve</button>`
+              : `<button class="btn btn-outline btn-xs" onclick="quickObjAction(${o.id},'reopen','')">🔁 Reopen</button>`
+            }
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    document.getElementById('obj-pager').innerHTML = pagerHtml(total, page, limit, 'objGoPage');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="alert alert-error">❌ ${esc(e.message)}</div></td></tr>`;
+  }
+}
+
+async function quickObjAction(id, action, remark) {
+  try {
+    await updateObjectionStatus(id, action, remark);
+    gFlash(`✅ Objection #${id} ${action}d`, 'success');
+    loadObjections();
+    // refresh dashboard badges
+    StaffAPI.get('/api/staff/dashboard').then(r=>{
+      document.getElementById('badge-obj').textContent = r.data.stats.pending_objections??0;
+    }).catch(()=>{});
+  } catch(e) { gFlash('❌ '+e.message, 'error'); }
+}
+
+function openObjModal(o) {
+  SP.currentObj = o;
+  const over = !o.resolved && new Date(o.deadline)<new Date();
+  document.getElementById('objModal-title').textContent = `Objection #${o.id} — ${o.application_no}`;
+
+  document.getElementById('objModal-body').innerHTML = `
+    <div class="detail-grid" style="margin-bottom:16px;">
+      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${esc(o.application_no)}</code></span></div>
+      <div class="detail-row"><span class="detail-key">Candidate</span><span class="detail-val">${esc(o.name)}</span></div>
+      <div class="detail-row"><span class="detail-key">District</span><span class="detail-val">${esc(o.district||'—')}</span></div>
+      <div class="detail-row"><span class="detail-key">Type</span><span class="detail-val">${esc(o.type)}</span></div>
+      <div class="detail-row"><span class="detail-key">Deadline</span><span class="detail-val" style="${over?'color:#dc2626;font-weight:700;':''}">${fmtDate(o.deadline)}${over?' ⚠️':''}</span></div>
+      <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${o.resolved?'✅ Resolved':'⏳ Pending'}</span></div>
+      <div class="detail-row"><span class="detail-key">Docs Uploaded</span><span class="detail-val">${o.upload_count??0}</span></div>
+      <div class="detail-row"><span class="detail-key">Created</span><span class="detail-val">${fmtDateTime(o.created_at)}</span></div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Original Remark</div>
+      <div class="remark-bubble">${esc(o.remark||'—')}</div>
+    </div>
+
+    ${o.staff_remark ? `<div class="form-group"><div class="form-label">Previous Staff Remark</div><div class="remark-bubble staff">${esc(o.staff_remark)}</div></div>` : ''}
+
+    <div class="form-group">
+      <label class="form-label" for="obj-remark-input">Staff Remark / Note</label>
+      <textarea class="form-textarea" id="obj-remark-input" rows="3" placeholder="Write a remark, note or reason…">${esc(o.staff_remark||'')}</textarea>
+    </div>
+    <div id="objModalFlash" class="flash" style="display:none;margin-top:8px;"></div>
+  `;
+
+  const footer = document.getElementById('objModal-footer');
+  footer.innerHTML = `
+    <button class="btn btn-outline" onclick="closeModal('objModal')">Close</button>
+    <button class="btn btn-outline btn-sm" id="btnRemark" onclick="modalObjAction('remark')">💬 Save Remark</button>
+    ${!o.resolved
+      ? `<button class="btn btn-success btn-sm" id="btnResolve" onclick="modalObjAction('resolve')">✅ Mark Resolved</button>`
+      : `<button class="btn btn-danger btn-sm"  id="btnReopen"  onclick="modalObjAction('reopen')">🔁 Reopen</button>`
+    }
+  `;
+  openModal('objModal');
+}
+
+async function modalObjAction(action) {
+  const o = SP.currentObj;
+  if (!o) return;
+  const remark = document.getElementById('obj-remark-input')?.value?.trim()||'';
+  const flashId = 'objModalFlash';
+  if (action==='remark'&&!remark) { showFlash(flashId,'Remark cannot be empty','error'); return; }
+  try {
+    await updateObjectionStatus(o.id, action, remark);
+    showFlash(flashId, `✅ ${action==='resolve'?'Resolved':action==='reopen'?'Reopened':'Remark saved'}!`, 'success');
+    setTimeout(()=>{ closeModal('objModal'); loadObjections(); }, 800);
+  } catch(e) { showFlash(flashId, '❌ '+e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════
+// UPLOADS
+// ══════════════════════════════════════════════════════
+async function loadUploads() {
+  const search = document.getElementById('upl-search').value.trim();
+  const tbody  = document.getElementById('upl-tbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr>';
+  try {
+    const url = `/api/staff/uploads?filter=${SP.uplFilter}&search=${encodeURIComponent(search)}&page=${SP.uplPage}&limit=20`;
+    const res = await StaffAPI.get(url);
+    const { uploads=[], total=0, page=1, limit=20 } = res.data;
+    if (!uploads.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>No uploads found</p></div></td></tr>';
+      document.getElementById('upl-pager').innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = uploads.map(u => {
+      const ext = (u.file_name||'').split('.').pop().toLowerCase();
+      const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+      const isPdf = ext==='pdf';
+      const fileIcon = isImg?'🖼️':isPdf?'📄':'📎';
+      return `<tr>
+        <td><b>#${u.id}</b></td>
+        <td><code style="font-size:11px;">${esc(u.application_no)}</code></td>
+        <td class="truncate">${esc(u.name)}</td>
+        <td style="font-size:12px;">${esc(u.doc_type)}</td>
+        <td><a href="/uploads/verified/${esc(u.file_name)}" target="_blank" title="${esc(u.original_name)}" style="text-decoration:none;">${fileIcon} <span style="font-size:11px;">${esc((u.original_name||'').substring(0,18))}…</span></a></td>
+        <td>${statusBadge(u.review_status||'pending')}</td>
+        <td class="truncate" style="font-size:11px;color:#64748b;" title="${esc(u.staff_remark)}">${esc((u.staff_remark||'').substring(0,30))||'—'}</td>
+        <td>
+          <div class="action-row">
+            <button class="btn btn-outline btn-xs" onclick='openUplModal(${JSON.stringify(u).replace(/'/g,"&#39;")})'>👁 Review</button>
+            ${u.review_status==='pending'
+              ? `<button class="btn btn-success btn-xs" onclick="quickUplAction(${u.id},'approve','')">✅</button>
+                 <button class="btn btn-danger btn-xs"  onclick="openUplRejectPrompt(${JSON.stringify(u).replace(/'/g,"&#39;")})">❌</button>`
+              : ''
+            }
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    document.getElementById('upl-pager').innerHTML = pagerHtml(total, page, limit, 'uplGoPage');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="alert alert-error">❌ ${esc(e.message)}</div></td></tr>`;
+  }
+}
+
+async function quickUplAction(id, action, remark) {
+  try {
+    await updateUploadStatus(id, action, remark);
+    gFlash(`✅ Upload #${id} ${action}d`, 'success');
+    loadUploads();
+    StaffAPI.get('/api/staff/dashboard').then(r=>{
+      document.getElementById('badge-upl').textContent = r.data.stats.pending_uploads??0;
+    }).catch(()=>{});
+  } catch(e) { gFlash('❌ '+e.message, 'error'); }
+}
+
+function openUplRejectPrompt(u) {
+  SP.currentUpl = u;
+  document.getElementById('uplModal-title').textContent = `Reject Document #${u.id}`;
+  document.getElementById('uplModal-body').innerHTML = `
+    <div class="alert alert-warning" style="margin-bottom:14px;">⚠️ You are about to reject this document. A reason is required.</div>
+    <div class="detail-grid" style="margin-bottom:14px;">
+      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${esc(u.application_no)}</code></span></div>
+      <div class="detail-row"><span class="detail-key">Document Type</span><span class="detail-val">${esc(u.doc_type)}</span></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="rej-reason">Rejection Reason <span class="required">*</span></label>
+      <textarea class="form-textarea" id="rej-reason" rows="3" placeholder="e.g. Document is blurry, wrong document submitted…"></textarea>
+    </div>
+    <div id="uplModalFlash" class="flash" style="display:none;"></div>
+  `;
+  document.getElementById('uplModal-footer').innerHTML = `
+    <button class="btn btn-outline" onclick="closeModal('uplModal')">Cancel</button>
+    <button class="btn btn-danger" onclick="confirmReject()">❌ Confirm Reject</button>
+  `;
+  openModal('uplModal');
+}
+
+async function confirmReject() {
+  const reason = document.getElementById('rej-reason')?.value?.trim()||'';
+  if (!reason) { showFlash('uplModalFlash','Rejection reason is required','error'); return; }
+  try {
+    await updateUploadStatus(SP.currentUpl.id, 'reject', reason);
+    closeModal('uplModal');
+    gFlash(`✅ Upload #${SP.currentUpl.id} rejected`, 'success');
+    loadUploads();
+  } catch(e) { showFlash('uplModalFlash','❌ '+e.message,'error'); }
+}
+
+function openUplModal(u) {
+  SP.currentUpl = u;
+  const ext = (u.file_name||'').split('.').pop().toLowerCase();
+  const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+  const fileUrl = `/uploads/verified/${encodeURIComponent(u.file_name||'')}`;
+
+  document.getElementById('uplModal-title').textContent = `Document Review — #${u.id} (${u.application_no})`;
+  document.getElementById('uplModal-body').innerHTML = `
+    <div class="file-preview-wrap" style="margin-bottom:14px;">
+      ${isImg
+        ? `<img src="${fileUrl}" alt="document preview" onerror="this.parentElement.innerHTML='<div class=\\'no-preview\\'>Preview unavailable — <a href=\\'${fileUrl}\\' target=\\'_blank\\'>Download ↗</a></div>'">`
+        : `<div class="no-preview">📄 <a href="${fileUrl}" target="_blank" style="color:#003580;font-weight:700;">Open / Download File ↗</a></div>`
+      }
+    </div>
+    <div class="detail-grid" style="margin-bottom:14px;">
+      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${esc(u.application_no)}</code></span></div>
+      <div class="detail-row"><span class="detail-key">Candidate</span><span class="detail-val">${esc(u.name)}</span></div>
+      <div class="detail-row"><span class="detail-key">Document Type</span><span class="detail-val">${esc(u.doc_type)}</span></div>
+      <div class="detail-row"><span class="detail-key">Section</span><span class="detail-val">${esc(u.section_code)}</span></div>
+      <div class="detail-row"><span class="detail-key">Objection</span><span class="detail-val">${esc(u.objection_type||'—')}</span></div>
+      <div class="detail-row"><span class="detail-key">Uploaded</span><span class="detail-val">${fmtDateTime(u.uploaded_at)}</span></div>
+      <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${statusBadge(u.review_status||'pending')}</span></div>
+      <div class="detail-row"><span class="detail-key">File</span><span class="detail-val" style="font-size:11px;">${esc(u.original_name)}</span></div>
+    </div>
+
+    ${u.staff_remark ? `<div class="form-group"><div class="form-label">Previous Remark</div><div class="remark-bubble staff">${esc(u.staff_remark)}</div></div>` : ''}
+
+    <div class="form-group">
+      <label class="form-label" for="upl-remark-input">Staff Note ${u.review_status==='pending'?'<span class=\\'required\\'>(required for rejection)</span>':''}</label>
+      <textarea class="form-textarea" id="upl-remark-input" rows="3" placeholder="Approval note or rejection reason…">${esc(u.staff_remark||'')}</textarea>
+    </div>
+    <div id="uplModalFlash" class="flash" style="display:none;"></div>
+  `;
+
+  const footer = document.getElementById('uplModal-footer');
+  footer.innerHTML = `<button class="btn btn-outline" onclick="closeModal('uplModal')">Close</button>`;
+  if (u.review_status==='pending') {
+    footer.innerHTML += `
+      <button class="btn btn-danger btn-sm"  onclick="modalUplAction('reject')">❌ Reject</button>
+      <button class="btn btn-success btn-sm" onclick="modalUplAction('approve')">✅ Approve</button>
+    `;
+  } else {
+    footer.innerHTML += `<button class="btn btn-outline btn-sm" onclick="modalUplAction('remark')">💬 Update Note</button>`;
+  }
+  openModal('uplModal');
+}
+
+async function modalUplAction(action) {
+  const u = SP.currentUpl;
+  if (!u) return;
+  const remark = document.getElementById('upl-remark-input')?.value?.trim()||'';
+  if (action==='reject'&&!remark) { showFlash('uplModalFlash','Rejection reason is required','error'); return; }
+  try {
+    await updateUploadStatus(u.id, action, remark);
+    showFlash('uplModalFlash', `✅ ${action==='approve'?'Approved':action==='reject'?'Rejected':'Note saved'}!`, 'success');
+    setTimeout(()=>{ closeModal('uplModal'); loadUploads(); }, 800);
+  } catch(e) { showFlash('uplModalFlash','❌ '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+(function init() {
+  const tok = getPrivToken();
+  if (tok) {
+    const p = decodeJwt(tok);
+    const name = p.username || 'Staff';
+    const role = p.role || 'staff';
+    document.getElementById('sideName').textContent   = name;
+    document.getElementById('sideRole').textContent   = role;
+    document.getElementById('sideAvatar').textContent = name[0].toUpperCase();
+    document.getElementById('hdrName').textContent    = name;
+    document.getElementById('hdrRole').textContent    = role;
+    document.getElementById('hdrAvatar').textContent  = name[0].toUpperCase();
+  }
+  switchSection('dashboard');
+})();
+</script>
+</body>
+</html>

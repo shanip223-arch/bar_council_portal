@@ -81,7 +81,7 @@ function showFlash(id, text, type) {
   }
 
   /* Staff area — requires staffToken OR adminToken */
-  if (['/staff-dashboard', '/staff-objections', '/staff-uploads'].includes(path)) {
+  if (['/staff-dashboard', '/staff-objections', '/staff-uploads', '/staff-panel'].includes(path)) {
     if (!hasPriv) { window.location.href = '/admin'; return; }
   }
 })();
@@ -296,3 +296,15 @@ function fmtDateTime(d) {
   return new Date(d).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 function isOverdue(deadline) { return deadline && new Date(deadline) < new Date(); }
+
+// ══════════════════════════════════════════════════════════════
+// STAFF PANEL — shared API functions (used by staff-panel.html)
+// ══════════════════════════════════════════════════════════════
+
+async function updateObjectionStatus(id, action, staff_remark) {
+  return StaffAPI.patch(`/api/staff/objection/${id}`, { action, staff_remark: staff_remark || '' });
+}
+
+async function updateUploadStatus(id, action, staff_remark) {
+  return StaffAPI.patch(`/api/staff/upload/${id}`, { action, staff_remark: staff_remark || '' });
+}
