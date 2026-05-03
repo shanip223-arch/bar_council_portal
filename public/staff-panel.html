@@ -3,296 +3,736 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Staff Control Panel – UP Bar Council</title>
-<link rel="stylesheet" href="/assets/admin.css"/>
+<title>Staff Control Panel | Bar Council of Uttar Pradesh</title>
 <style>
-/* ── Mobile tab bar ─────────────────────────────── */
-.mobile-tabs {
+/* ═══════════════════════════════════════════════════════
+   GOVERNMENT PORTAL STYLE — UPPSC-inspired
+   Bar Council of Uttar Pradesh — Staff Panel
+   ═══════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gov-blue:    #0b3d91;
+  --gov-blue2:   #092d6e;
+  --gov-blue3:   #d0e4ff;
+  --gov-red:     #b91c1c;
+  --gov-green:   #166534;
+  --gov-orange:  #c2410c;
+  --gov-yellow:  #fef3c7;
+  --bg:          #f0f0f0;
+  --white:       #ffffff;
+  --border:      #cccccc;
+  --border2:     #aaaaaa;
+  --text:        #1a1a1a;
+  --muted:       #555555;
+  --th-bg:       #dce8f8;
+  --tr-alt:      #f9f9f9;
+  --font:        'Segoe UI', Arial, Helvetica, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+a { color: var(--gov-blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; }
+
+/* ── ACCESS BAR (topmost strip) ─────────────────────── */
+.access-bar {
+  background: var(--gov-blue2);
+  color: #ccc;
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+}
+.access-bar .ab-inner {
+  max-width: 1200px; margin: auto; padding: 0 16px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.access-bar a { color: #ccc; }
+.access-bar a:hover { color: #fff; }
+.access-bar .ab-links { display: flex; gap: 14px; }
+.ab-sep { color: #555; margin: 0 2px; }
+
+/* ── HEADER LOGO STRIP ──────────────────────────────── */
+.gov-header {
+  background: var(--gov-blue);
+  padding: 12px 0;
+  border-bottom: 3px solid #f97316;
+}
+.gov-header .hdr-inner {
+  max-width: 1200px; margin: auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 16px;
+}
+.gov-emblem {
+  width: 66px; height: 66px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; flex-shrink: 0;
+  border: 3px solid rgba(255,255,255,.4);
+}
+.gov-title { flex: 1; }
+.gov-title .org-hi { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: .3px; }
+.gov-title .org-en { color: #b3d0ff; font-size: 14px; margin-top: 2px; }
+.gov-title .org-sub { color: rgba(255,255,255,.6); font-size: 11px; margin-top: 2px; }
+.gov-right { text-align: right; }
+.gov-right .staff-chip {
+  display: inline-block;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff; font-size: 12px; font-weight: 600;
+  padding: 5px 14px; cursor: default;
+}
+.gov-right .date-text { color: #b3d0ff; font-size: 11px; margin-top: 6px; }
+.logout-link {
+  display: inline-block; margin-top: 6px;
+  color: #fda4a4; font-size: 11px; font-weight: 600; cursor: pointer;
+  border: none; background: none; font-family: var(--font);
+}
+.logout-link:hover { color: #fff; text-decoration: underline; }
+
+/* ── NOTICE/MARQUEE BAR ─────────────────────────────── */
+.notice-bar {
+  background: #fff3cd;
+  border-top: 1px solid #ffc107;
+  border-bottom: 1px solid #ffc107;
+  padding: 6px 0;
+}
+.notice-bar .nb-inner {
+  max-width: 1200px; margin: auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.notice-label {
+  background: #dc2626; color: #fff;
+  font-size: 11px; font-weight: 700; padding: 2px 8px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.notice-bar marquee { font-size: 12px; color: #7c3d01; font-weight: 600; }
+
+/* ── HORIZONTAL NAV ─────────────────────────────────── */
+.gov-nav {
+  background: var(--gov-blue);
+  border-bottom: 2px solid #f97316;
+}
+.gov-nav .nav-inner {
+  max-width: 1200px; margin: auto;
+  display: flex; align-items: stretch;
+}
+.gov-nav a, .gov-nav button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 11px 18px; color: #d0e4ff;
+  font-size: 13px; font-weight: 600;
+  border: none; background: none; font-family: var(--font);
+  cursor: pointer; border-bottom: 3px solid transparent;
+  text-decoration: none; white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.gov-nav a:hover, .gov-nav button:hover {
+  background: rgba(255,255,255,.12); color: #fff;
+  text-decoration: none;
+}
+.gov-nav button.active {
+  background: rgba(255,255,255,.18);
+  color: #fff; border-bottom-color: #f97316;
+}
+.nav-badge-cnt {
+  background: #dc2626; color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 99px;
+}
+.nav-ham { display: none; margin-left: auto; color: #fff; font-size: 22px; padding: 8px 16px; }
+
+/* ── WRAPPER ─────────────────────────────────────────── */
+.gov-wrap { max-width: 1200px; margin: 0 auto; padding: 18px 16px; }
+
+/* ── ALERT BOX ──────────────────────────────────────── */
+.alert-box {
+  border: 1px solid #fca5a5;
+  background: #fff5f5;
+  padding: 10px 16px;
+  margin-bottom: 16px;
   display: none;
-  background: #0f1c2e;
-  border-bottom: 1px solid rgba(255,255,255,.1);
 }
-.mobile-tabs button {
-  flex: 1; padding: 12px 4px; background: none; border: none;
-  color: #94a3b8; font-size: 12px; font-weight: 600; cursor: pointer;
-  border-bottom: 2px solid transparent; transition: all .15s;
-}
-.mobile-tabs button.active { color: #FF6600; border-bottom-color: #FF6600; }
-@media (max-width: 768px) {
-  .sidebar { display: none !important; }
-  .mobile-tabs { display: flex; }
-  .main-content { margin-left: 0 !important; }
-  .top-header .page-subtitle { display: none; }
-}
+.alert-box.show { display: block; }
+.alert-box.success { border-color: #86efac; background: #f0fdf4; }
+.alert-box.error   { border-color: #fca5a5; background: #fff5f5; }
+.alert-box.info    { border-color: #93c5fd; background: #eff6ff; }
+.alert-box p { font-size: 13px; font-weight: 600; }
 
-/* ── User badge ─────────────────────────────────── */
-.user-badge {
-  display: flex; align-items: center; gap: 8px;
-  background: #f8fafc; border: 1px solid #e2e8f0;
-  border-radius: 20px; padding: 5px 12px 5px 6px;
+/* ── NOTICE PANEL ───────────────────────────────────── */
+.notice-panel {
+  background: var(--gov-yellow);
+  border: 1px solid #fde68a;
+  padding: 12px 16px;
+  margin-bottom: 16px;
 }
-.user-badge .ub-avatar {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: #003580; color: #fff; font-size: 12px;
-  font-weight: 700; display: flex; align-items: center; justify-content: center;
-}
-.user-badge .ub-name { font-size: 12px; font-weight: 700; color: #1e293b; }
-.user-badge .ub-role { font-size: 10px; color: #64748b; text-transform: capitalize; }
+.notice-panel .np-title { font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; }
+.notice-item { font-size: 12px; color: #7c3d01; padding: 3px 0; border-bottom: 1px dashed #fde68a; }
+.notice-item:last-child { border-bottom: none; }
+.notice-item::before { content: '➤ '; }
+.notice-item.urgent { color: #b91c1c; font-weight: 700; }
 
-/* ── Objection remark bubble ─────────────────────── */
-.remark-bubble {
-  background: #f8fafc; border: 1px solid #e2e8f0;
-  border-radius: 6px; padding: 8px 12px;
-  font-size: 13px; color: #374151; white-space: pre-wrap;
+/* ── SECTION HEADING ────────────────────────────────── */
+.sec-heading {
+  background: var(--gov-blue);
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 13px; font-weight: 700;
+  margin-bottom: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
 }
-.remark-bubble.staff { background: #f0fdf4; border-color: #86efac; }
+.sec-heading span { display: flex; align-items: center; gap: 6px; }
 
-/* ── File preview ────────────────────────────────── */
-.file-preview-wrap {
-  background: #f8fafc; border: 1px solid #e2e8f0;
-  border-radius: 8px; overflow: hidden; margin-bottom: 14px;
+/* ── STAT CARDS ─────────────────────────────────────── */
+.stat-row { display: flex; gap: 0; border: 1px solid var(--border); margin-bottom: 16px; }
+.stat-box {
+  flex: 1; padding: 18px 16px; background: var(--white);
+  border-right: 1px solid var(--border);
   text-align: center;
 }
-.file-preview-wrap img { max-width: 100%; max-height: 340px; object-fit: contain; display: block; margin: auto; }
-.file-preview-wrap .no-preview { padding: 30px; color: #64748b; font-size: 13px; }
+.stat-box:last-child { border-right: none; }
+.stat-box .s-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.stat-box .s-val { font-size: 32px; font-weight: 800; color: var(--gov-blue); margin: 6px 0 4px; line-height: 1; }
+.stat-box .s-sub { font-size: 11px; color: var(--muted); }
+.stat-box.warn .s-val { color: #c2410c; }
+.stat-box.ok   .s-val { color: var(--gov-green); }
 
-/* ── Action row ──────────────────────────────────── */
-.action-row { display: flex; gap: 6px; flex-wrap: wrap; }
-
-/* ── Scrollable table on mobile ──────────────────── */
-@media (max-width: 600px) {
-  .data-table { font-size: 12px; }
-  .data-table th, .data-table td { padding: 8px 8px; }
-  .action-row { flex-direction: column; }
+/* ── FILTERS / TOOLBAR ──────────────────────────────── */
+.tbl-toolbar {
+  background: #f5f5f5;
+  border: 1px solid var(--border); border-bottom: none;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
+.tbl-toolbar label { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.gov-select {
+  padding: 5px 8px; font-size: 12px;
+  border: 1px solid var(--border2); background: #fff;
+  font-family: var(--font); color: var(--text);
+}
+.gov-input {
+  padding: 5px 10px; font-size: 12px;
+  border: 1px solid var(--border2); background: #fff;
+  font-family: var(--font); color: var(--text); width: 200px;
+}
+.gov-input:focus, .gov-select:focus { outline: 2px solid var(--gov-blue); outline-offset: 0; }
+.filter-pill {
+  padding: 4px 12px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border2); background: #fff;
+  cursor: pointer; font-family: var(--font); color: var(--muted);
+}
+.filter-pill:hover { background: var(--gov-blue3); }
+.filter-pill.active { background: var(--gov-blue); color: #fff; border-color: var(--gov-blue); }
+.filter-pill.danger { color: #b91c1c; border-color: #fca5a5; }
+.filter-pill.danger:hover, .filter-pill.danger.active { background: #b91c1c; color: #fff; border-color: #b91c1c; }
+.spacer { flex: 1; }
 
-/* ── Upload status row ───────────────────────────── */
-.upl-status-pending  { color: #92400e; }
-.upl-status-approved { color: #166534; }
-.upl-status-rejected { color: #991b1b; }
+/* ── GOV TABLE ──────────────────────────────────────── */
+.gov-table-wrap { overflow-x: auto; }
+.gov-table {
+  width: 100%; border-collapse: collapse;
+  border: 1px solid var(--border); font-size: 13px;
+  background: #fff;
+}
+.gov-table thead th {
+  background: var(--th-bg); color: var(--gov-blue2);
+  padding: 9px 10px; text-align: left;
+  font-size: 12px; font-weight: 700;
+  border: 1px solid var(--border); white-space: nowrap;
+}
+.gov-table tbody td {
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+.gov-table tbody tr:nth-child(even) td { background: var(--tr-alt); }
+.gov-table tbody tr:hover td { background: #eaf1fb; }
+.gov-table tbody tr.overdue-row td { background: #fff5f5 !important; }
+.gov-table .trunc { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ── Overdue highlight ───────────────────────────── */
-tr.overdue td { background: #fff5f5 !important; }
+/* ── STATUS BADGES ──────────────────────────────────── */
+.gov-badge {
+  display: inline-block; padding: 2px 8px;
+  font-size: 11px; font-weight: 700;
+  border: 1px solid;
+}
+.gb-pending  { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+.gb-approved,.gb-resolved { background: #dcfce7; border-color: #86efac; color: #166534; }
+.gb-rejected { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+.gb-overdue  { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+.gb-review   { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
 
-/* ── Global flash (top of page) ─────────────────── */
-#globalFlash {
+/* ── BUTTONS ────────────────────────────────────────── */
+.gb { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid; font-family: var(--font); white-space: nowrap; }
+.gb:disabled { opacity: .5; cursor: not-allowed; }
+.gb-blue  { background: var(--gov-blue); color: #fff; border-color: var(--gov-blue2); }
+.gb-blue:hover:not(:disabled) { background: var(--gov-blue2); }
+.gb-green { background: #166534; color: #fff; border-color: #15803d; }
+.gb-green:hover:not(:disabled) { background: #14532d; }
+.gb-red   { background: #b91c1c; color: #fff; border-color: #991b1b; }
+.gb-red:hover:not(:disabled)   { background: #991b1b; }
+.gb-grey  { background: #f5f5f5; color: #333; border-color: #bbb; }
+.gb-grey:hover:not(:disabled)  { background: #e5e5e5; }
+.gb-sm { padding: 3px 8px; font-size: 11px; }
+.btn-row { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* ── PAGINATION ─────────────────────────────────────── */
+.gov-pager { display: flex; align-items: center; gap: 0; margin: 0; border: 1px solid var(--border); border-top: none; background: #f5f5f5; padding: 8px 12px; }
+.gov-pager button {
+  min-width: 30px; height: 28px; padding: 0 8px;
+  border: 1px solid var(--border); background: #fff;
+  font-size: 12px; cursor: pointer; font-family: var(--font);
+  margin-right: 3px; color: var(--gov-blue);
+}
+.gov-pager button:hover { background: var(--gov-blue3); }
+.gov-pager button.active { background: var(--gov-blue); color: #fff; border-color: var(--gov-blue); font-weight: 700; }
+.gov-pager button:disabled { opacity: .4; cursor: not-allowed; }
+.gov-pager .pg-info { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+/* ── EMPTY STATE ────────────────────────────────────── */
+.gov-empty { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; border: 1px solid var(--border); border-top: none; background: #fff; }
+.gov-empty .ei { font-size: 28px; margin-bottom: 8px; }
+
+/* ── LOADING ────────────────────────────────────────── */
+.gov-loading { padding: 24px; text-align: center; color: var(--gov-blue); font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-top: none; background: #fff; }
+
+/* ── MODAL ──────────────────────────────────────────── */
+.gov-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1000; display: none;
+  align-items: flex-start; justify-content: center;
+  padding: 40px 16px; overflow-y: auto;
+}
+.gov-modal-backdrop.open { display: flex; }
+.gov-modal {
+  background: #fff;
+  border: 2px solid var(--gov-blue);
+  width: 100%; max-width: 660px;
+  position: relative; margin: auto;
+}
+.gov-modal-head {
+  background: var(--gov-blue); color: #fff;
+  padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+}
+.gov-modal-head .gm-title { font-size: 14px; font-weight: 700; }
+.gov-modal-close { background: none; border: none; color: rgba(255,255,255,.8); font-size: 20px; cursor: pointer; line-height: 1; }
+.gov-modal-close:hover { color: #fff; }
+.gov-modal-body { padding: 18px; max-height: 70vh; overflow-y: auto; }
+.gov-modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); background: #f5f5f5; display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── DETAIL TABLE (inside modal) ────────────────────── */
+.det-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 13px; }
+.det-table td { padding: 7px 10px; border: 1px solid #ddd; vertical-align: top; }
+.det-table td:first-child { background: #f5f5f5; font-weight: 700; color: var(--gov-blue2); width: 38%; white-space: nowrap; }
+
+/* ── REMARK BOX ─────────────────────────────────────── */
+.remark-display {
+  background: #f9f9f9; border: 1px solid var(--border);
+  padding: 10px 12px; font-size: 13px;
+  white-space: pre-wrap; margin-bottom: 12px;
+}
+.remark-display.staff { background: #f0fdf4; border-color: #86efac; }
+
+/* ── FORM FIELDS ────────────────────────────────────── */
+.gf-label { font-size: 12px; font-weight: 700; color: var(--gov-blue2); display: block; margin-bottom: 4px; }
+.gf-input, .gf-textarea, .gf-select {
+  width: 100%; padding: 7px 10px;
+  border: 1px solid var(--border2); font-family: var(--font);
+  font-size: 13px; color: var(--text); background: #fff;
+}
+.gf-textarea { resize: vertical; min-height: 80px; }
+.gf-input:focus, .gf-textarea:focus, .gf-select:focus { outline: 2px solid var(--gov-blue); }
+.gf-group { margin-bottom: 12px; }
+.req { color: #b91c1c; }
+
+/* ── FILE PREVIEW ───────────────────────────────────── */
+.file-preview-zone { border: 1px solid var(--border); background: #f9f9f9; text-align: center; padding: 14px; margin-bottom: 14px; }
+.file-preview-zone img { max-width: 100%; max-height: 300px; object-fit: contain; display: block; margin: auto; }
+.file-link { color: var(--gov-blue); font-size: 13px; font-weight: 600; }
+
+/* ── ACTIVITY / LOG LIST ────────────────────────────── */
+.log-list { background: #fff; border: 1px solid var(--border); }
+.log-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #eee; font-size: 12px; }
+.log-row:last-child { border-bottom: none; }
+.log-row:nth-child(even) { background: #f9f9f9; }
+.log-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gov-blue); flex-shrink: 0; margin-top: 4px; }
+.log-dot.red  { background: #b91c1c; }
+.log-dot.green{ background: #166534; }
+.log-action { flex: 1; color: var(--text); }
+.log-time { color: var(--muted); white-space: nowrap; }
+
+/* ── MINI CARDS (dashboard recent) ─────────────────── */
+.mini-card-list { background: #fff; border: 1px solid var(--border); }
+.mini-card-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #eee; font-size: 12px; }
+.mini-card-row:last-child { border-bottom: none; }
+.mini-card-row:nth-child(even) { background: #f9f9f9; }
+.mc-no { font-weight: 700; color: var(--gov-blue); min-width: 100px; }
+.mc-name { flex: 1; color: var(--text); }
+.mc-date { color: var(--muted); white-space: nowrap; font-size: 11px; }
+
+/* ── FOOTER ─────────────────────────────────────────── */
+.gov-footer { background: var(--gov-blue2); color: #9ab3d8; font-size: 12px; text-align: center; padding: 14px 16px; border-top: 3px solid #f97316; margin-top: 28px; }
+.gov-footer a { color: #9ab3d8; }
+.gov-footer .ff-links { display: flex; justify-content: center; gap: 16px; margin-bottom: 6px; font-size: 11px; }
+.gov-footer .ff-links a { color: #b3c9e8; }
+
+/* ── FLASH TOAST ────────────────────────────────────── */
+#gFlash {
   position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-  padding: 12px 20px; font-size: 14px; font-weight: 700;
-  text-align: center; display: none; border-bottom: 2px solid;
+  padding: 11px 20px; text-align: center; font-size: 13px; font-weight: 700;
+  display: none; border-bottom: 2px solid;
 }
-#globalFlash.success { background: #dcfce7; color: #166534; border-color: #86efac; }
-#globalFlash.error   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+#gFlash.success { background: #dcfce7; color: #166534; border-color: #86efac; }
+#gFlash.error   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+#gFlash.info    { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .stat-row { flex-direction: column; }
+  .stat-box { border-right: none; border-bottom: 1px solid var(--border); }
+  .stat-box:last-child { border-bottom: none; }
+  .gov-nav .nav-inner { flex-wrap: wrap; }
+  .gov-nav button, .gov-nav a { padding: 9px 12px; font-size: 12px; }
+}
+@media (max-width: 640px) {
+  .nav-ham { display: block; }
+  .gov-nav .nav-links { display: none; flex-direction: column; width: 100%; }
+  .gov-nav .nav-links.open { display: flex; }
+  .gov-nav .nav-links button, .gov-nav .nav-links a { border-bottom: 1px solid rgba(255,255,255,.1); }
+  .gov-title .org-hi { font-size: 17px; }
+  .gov-input { width: 130px; }
+  .tbl-toolbar { flex-direction: column; align-items: flex-start; }
+  .btn-row { flex-direction: column; }
+  .gov-modal { max-width: 98vw; }
+}
 </style>
 </head>
 <body>
 
-<!-- Global flash toast -->
-<div id="globalFlash"></div>
+<!-- ════ FLASH TOAST ════════════════════════════════════ -->
+<div id="gFlash"></div>
 
-<div class="admin-layout">
-
-  <!-- ════ SIDEBAR (desktop) ════════════════════════ -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="logo">⚖️</div>
-      <div class="brand-text">
-        <div class="name">UP Bar Council</div>
-        <div class="sub">Staff Control Panel</div>
-      </div>
+<!-- ════ ACCESS BAR ═════════════════════════════════════ -->
+<div class="access-bar">
+  <div class="ab-inner">
+    <div class="ab-links">
+      <a href="/">Candidate Portal</a>
+      <span class="ab-sep">|</span>
+      <a href="/admin">Admin Login</a>
+      <span class="ab-sep">|</span>
+      <a href="#" onclick="doLogout()">Logout</a>
     </div>
-
-    <div class="sidebar-section-label">Sections</div>
-    <nav>
-      <button class="nav-link active" id="sideNav-dashboard"   onclick="switchSection('dashboard')">
-        <span class="nav-icon">🏠</span> Dashboard
-      </button>
-      <button class="nav-link" id="sideNav-objections" onclick="switchSection('objections')">
-        <span class="nav-icon">📋</span> Objections
-        <span class="nav-badge" id="badge-obj">0</span>
-      </button>
-      <button class="nav-link" id="sideNav-uploads" onclick="switchSection('uploads')">
-        <span class="nav-icon">📁</span> Upload Review
-        <span class="nav-badge" id="badge-upl">0</span>
-      </button>
-    </nav>
-
-    <div style="flex:1;"></div>
-    <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="avatar" id="sideAvatar">S</div>
-        <div>
-          <div id="sideName"  style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div>
-          <div id="sideRole"  style="color:#64748b;font-size:10px;">staff</div>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="doLogout()">
-        🚪 Logout
-      </button>
-    </div>
-  </aside>
-
-  <!-- ════ MAIN ══════════════════════════════════════ -->
-  <div class="main-content">
-
-    <!-- Mobile tab bar -->
-    <div class="mobile-tabs">
-      <button id="mTab-dashboard"   class="active" onclick="switchSection('dashboard')">🏠 Dashboard</button>
-      <button id="mTab-objections"  onclick="switchSection('objections')">📋 Objections</button>
-      <button id="mTab-uploads"     onclick="switchSection('uploads')">📁 Uploads</button>
-    </div>
-
-    <!-- Top header -->
-    <header class="top-header" style="position:sticky;top:0;z-index:100;">
-      <span class="page-title">⚖️ Staff Control Panel</span>
-      <span class="page-subtitle">| UP Bar Council</span>
-      <div class="header-spacer"></div>
-      <div class="user-badge" id="headerBadge">
-        <div class="ub-avatar" id="hdrAvatar">S</div>
-        <div><div class="ub-name" id="hdrName">Staff</div><div class="ub-role" id="hdrRole">staff</div></div>
-      </div>
-      <button class="header-btn danger" onclick="doLogout()">🚪 Logout</button>
-    </header>
-
-    <!-- ── DASHBOARD SECTION ─────────────────────── -->
-    <div class="page-body section" id="section-dashboard">
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card">
-          <div class="stat-info"><div class="label">Pending Objections</div><div class="value" id="d-pobj">…</div><div class="sub">Awaiting action</div></div>
-          <div class="stat-icon ic-yellow">📋</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-info"><div class="label">Docs Pending Review</div><div class="value" id="d-pupl">…</div><div class="sub">To verify</div></div>
-          <div class="stat-icon ic-blue">📁</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-info"><div class="label">Completed Today</div><div class="value" id="d-today">…</div><div class="sub">My actions</div></div>
-          <div class="stat-icon ic-green">✅</div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
-        <!-- Recent objections -->
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">📋 Recent Objections</span>
-            <button class="btn btn-outline btn-sm" onclick="switchSection('objections')">View All →</button>
-          </div>
-          <div class="panel-body" id="dash-recent-obj">
-            <div class="loading-overlay">⏳</div>
-          </div>
-        </div>
-        <!-- Recent uploads -->
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">📁 Recent Uploads</span>
-            <button class="btn btn-outline btn-sm" onclick="switchSection('uploads')">View All →</button>
-          </div>
-          <div class="panel-body" id="dash-recent-upl">
-            <div class="loading-overlay">⏳</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Activity -->
-      <div class="panel" style="margin-top:16px;">
-        <div class="panel-header"><span class="panel-title">🕒 Recent Activity (My last 5 actions)</span></div>
-        <div class="panel-body" id="dash-activity">
-          <div class="loading-overlay">⏳</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── OBJECTIONS SECTION ────────────────────── -->
-    <div class="page-body section" id="section-objections" style="display:none;">
-      <div class="panel">
-        <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
-          <span class="panel-title">📋 Objection Management</span>
-          <div class="toolbar" style="flex:1;justify-content:flex-end;">
-            <div class="search-box">
-              <span>🔍</span>
-              <input id="obj-search" placeholder="App No / Name…" oninput="debounceFn('obj')" style="width:150px;"/>
-            </div>
-            <div class="filter-btns">
-              <button class="filter-btn active" onclick="setObjFilter('all',this)">All</button>
-              <button class="filter-btn" onclick="setObjFilter('pending',this)">Pending</button>
-              <button class="filter-btn" onclick="setObjFilter('overdue',this)" style="color:#dc2626;">Overdue ⚠️</button>
-              <button class="filter-btn" onclick="setObjFilter('resolved',this)">Resolved</button>
-            </div>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th><th>App No</th><th>Name</th><th>Type</th><th>Status</th><th>Deadline</th><th>Docs</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="obj-tbody"><tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="obj-pager"></div>
-      </div>
-    </div>
-
-    <!-- ── UPLOADS SECTION ───────────────────────── -->
-    <div class="page-body section" id="section-uploads" style="display:none;">
-      <div class="panel">
-        <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
-          <span class="panel-title">📁 Upload Review</span>
-          <div class="toolbar" style="flex:1;justify-content:flex-end;">
-            <div class="search-box">
-              <span>🔍</span>
-              <input id="upl-search" placeholder="App No / Name…" oninput="debounceFn('upl')" style="width:150px;"/>
-            </div>
-            <div class="filter-btns">
-              <button class="filter-btn active" onclick="setUplFilter('all',this)">All</button>
-              <button class="filter-btn" onclick="setUplFilter('pending',this)">Pending</button>
-              <button class="filter-btn" onclick="setUplFilter('approved',this)" style="color:#16a34a;">Approved</button>
-              <button class="filter-btn" onclick="setUplFilter('rejected',this)" style="color:#dc2626;">Rejected</button>
-            </div>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th><th>App No</th><th>Candidate</th><th>Doc Type</th><th>File</th><th>Status</th><th>Staff Note</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="upl-tbody"><tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="upl-pager"></div>
-      </div>
-    </div>
-
-  </div><!-- main-content -->
-</div><!-- admin-layout -->
-
-<!-- ════ OBJECTION DETAIL MODAL ═════════════════════ -->
-<div class="modal-overlay" id="objModal">
-  <div class="modal" style="max-width:640px;">
-    <div class="modal-header">
-      <span class="modal-title" id="objModal-title">Objection Details</span>
-      <button class="modal-close" onclick="closeModal('objModal')">✕</button>
-    </div>
-    <div class="modal-body" id="objModal-body"></div>
-    <div class="modal-footer" id="objModal-footer">
-      <button class="btn btn-outline" onclick="closeModal('objModal')">Close</button>
+    <div>
+      <span id="hdrDate"></span>
+      <span class="ab-sep"> | </span>
+      <span id="hdrUser">Staff</span>
     </div>
   </div>
 </div>
 
-<!-- ════ UPLOAD REVIEW MODAL ════════════════════════ -->
-<div class="modal-overlay" id="uplModal">
-  <div class="modal" style="max-width:660px;">
-    <div class="modal-header">
-      <span class="modal-title" id="uplModal-title">Document Review</span>
-      <button class="modal-close" onclick="closeModal('uplModal')">✕</button>
+<!-- ════ GOVERNMENT HEADER ══════════════════════════════ -->
+<div class="gov-header">
+  <div class="hdr-inner">
+    <div class="gov-emblem">⚖️</div>
+    <div class="gov-title">
+      <div class="org-hi">बार काउंसिल ऑफ उत्तर प्रदेश</div>
+      <div class="org-en">Bar Council of Uttar Pradesh</div>
+      <div class="org-sub">Government of Uttar Pradesh &nbsp;|&nbsp; Advocate Certificate Portal</div>
     </div>
-    <div class="modal-body" id="uplModal-body"></div>
-    <div class="modal-footer" id="uplModal-footer">
-      <button class="btn btn-outline" onclick="closeModal('uplModal')">Close</button>
+    <div class="gov-right">
+      <div class="staff-chip" id="staffChip">⚠️ Staff Login</div>
+      <div class="date-text" id="todayDate"></div>
+      <button class="logout-link" onclick="doLogout()">🚪 Logout / लॉगआउट</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ NOTICE BAR ═════════════════════════════════════ -->
+<div class="notice-bar">
+  <div class="nb-inner">
+    <span class="notice-label">📢 NOTICE</span>
+    <marquee scrollamount="3">
+      All document uploads are subject to verification by authorized staff. &nbsp;|&nbsp;
+      Staff members must resolve all objections before the deadline. &nbsp;|&nbsp;
+      Unauthorized access to this portal is prohibited under IT Act 2000. &nbsp;|&nbsp;
+      For technical support contact the IT Cell.
+    </marquee>
+  </div>
+</div>
+
+<!-- ════ NAV BAR ════════════════════════════════════════ -->
+<div class="gov-nav" id="govNav">
+  <div class="nav-inner">
+    <div class="nav-links" id="navLinks">
+      <button class="active" id="nb-dashboard"   onclick="switchTab('dashboard')">🏠 Dashboard</button>
+      <button id="nb-objections" onclick="switchTab('objections')">📋 Objections <span class="nav-badge-cnt" id="badge-obj">0</span></button>
+      <button id="nb-uploads"    onclick="switchTab('uploads')">📁 Upload Review <span class="nav-badge-cnt" id="badge-upl">0</span></button>
+      <button id="nb-logs"       onclick="switchTab('logs')">🕒 Activity Log</button>
+    </div>
+    <button class="nav-ham" id="navHam" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+  </div>
+</div>
+
+<!-- ════ MAIN CONTENT ═══════════════════════════════════ -->
+<div class="gov-wrap">
+
+  <!-- Global alert -->
+  <div class="alert-box" id="pageAlert"><p id="pageAlertMsg"></p></div>
+
+  <!-- Important notices panel -->
+  <div class="notice-panel" id="noticePanel" style="display:none;">
+    <div class="np-title">⚠️ Important Alerts / महत्वपूर्ण सूचनाएं</div>
+    <div id="noticeList"></div>
+  </div>
+
+  <!-- ── DASHBOARD ──────────────────────────────────── -->
+  <div id="tab-dashboard">
+
+    <div class="sec-heading">
+      <span>🏠 Staff Dashboard — Overview</span>
+      <button class="gb gb-grey gb-sm" onclick="loadStaffDashboard()">🔄 Refresh</button>
+    </div>
+
+    <!-- Stat boxes -->
+    <div class="stat-row" id="statRow">
+      <div class="stat-box warn">
+        <div class="s-label">Pending Objections</div>
+        <div class="s-val" id="s-pobj">—</div>
+        <div class="s-sub">Awaiting resolution</div>
+      </div>
+      <div class="stat-box warn">
+        <div class="s-label">Overdue Objections</div>
+        <div class="s-val" id="s-oobj">—</div>
+        <div class="s-sub">Deadline passed</div>
+      </div>
+      <div class="stat-box">
+        <div class="s-label">Documents to Review</div>
+        <div class="s-val" id="s-pupl">—</div>
+        <div class="s-sub">Pending verification</div>
+      </div>
+      <div class="stat-box ok">
+        <div class="s-label">Completed Today</div>
+        <div class="s-val" id="s-today">—</div>
+        <div class="s-sub">My actions today</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+
+      <!-- Recent objections -->
+      <div>
+        <div class="sec-heading" style="font-size:12px;">📋 Recent Objections</div>
+        <div id="d-recent-obj"><div class="gov-loading">⏳ Loading…</div></div>
+      </div>
+
+      <!-- Recent uploads -->
+      <div>
+        <div class="sec-heading" style="font-size:12px;">📁 Recent Uploads</div>
+        <div id="d-recent-upl"><div class="gov-loading">⏳ Loading…</div></div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="sec-heading" style="font-size:12px;">🕒 My Recent Activity (Last 5)</div>
+      <div id="d-activity"><div class="gov-loading">⏳ Loading…</div></div>
+    </div>
+
+  </div>
+
+  <!-- ── OBJECTIONS ─────────────────────────────────── -->
+  <div id="tab-objections" style="display:none;">
+    <div class="sec-heading">
+      <span>📋 Objection Management</span>
+      <button class="gb gb-grey gb-sm" onclick="loadObjections()">🔄 Refresh</button>
+    </div>
+
+    <div class="tbl-toolbar">
+      <label>Filter:</label>
+      <button class="filter-pill active" onclick="setObjF('all',this)">All</button>
+      <button class="filter-pill" onclick="setObjF('pending',this)">Pending</button>
+      <button class="filter-pill danger" onclick="setObjF('overdue',this)">⚠️ Overdue</button>
+      <button class="filter-pill" onclick="setObjF('resolved',this)">✅ Resolved</button>
+      <div class="spacer"></div>
+      <label>Search:</label>
+      <input class="gov-input" id="obj-search" placeholder="Application No / Name…" oninput="debounce('obj')"/>
+    </div>
+
+    <div class="gov-table-wrap">
+      <table class="gov-table" id="obj-table">
+        <thead>
+          <tr>
+            <th style="width:48px;">ID</th>
+            <th>App No</th>
+            <th>Candidate Name</th>
+            <th>Type</th>
+            <th style="width:90px;">Status</th>
+            <th style="width:100px;">Deadline</th>
+            <th style="width:36px;text-align:center;">Docs</th>
+            <th style="width:180px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="obj-tbody">
+          <tr><td colspan="8"><div class="gov-loading">⏳ Loading…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gov-pager" id="obj-pager" style="display:none;"></div>
+  </div>
+
+  <!-- ── UPLOADS ────────────────────────────────────── -->
+  <div id="tab-uploads" style="display:none;">
+    <div class="sec-heading">
+      <span>📁 Document Upload Review</span>
+      <button class="gb gb-grey gb-sm" onclick="loadUploads()">🔄 Refresh</button>
+    </div>
+
+    <div class="tbl-toolbar">
+      <label>Filter:</label>
+      <button class="filter-pill active" onclick="setUplF('all',this)">All</button>
+      <button class="filter-pill" onclick="setUplF('pending',this)">Pending</button>
+      <button class="filter-pill" onclick="setUplF('approved',this)">✅ Approved</button>
+      <button class="filter-pill danger" onclick="setUplF('rejected',this)">❌ Rejected</button>
+      <div class="spacer"></div>
+      <label>Search:</label>
+      <input class="gov-input" id="upl-search" placeholder="Application No / Name…" oninput="debounce('upl')"/>
+    </div>
+
+    <div class="gov-table-wrap">
+      <table class="gov-table" id="upl-table">
+        <thead>
+          <tr>
+            <th style="width:48px;">ID</th>
+            <th>App No</th>
+            <th>Candidate</th>
+            <th>Document Type</th>
+            <th>File</th>
+            <th style="width:90px;">Status</th>
+            <th>Staff Note</th>
+            <th style="width:160px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="upl-tbody">
+          <tr><td colspan="8"><div class="gov-loading">⏳ Loading…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gov-pager" id="upl-pager" style="display:none;"></div>
+  </div>
+
+  <!-- ── LOGS ───────────────────────────────────────── -->
+  <div id="tab-logs" style="display:none;">
+    <div class="sec-heading">
+      <span>🕒 Activity Log</span>
+      <button class="gb gb-grey gb-sm" onclick="loadLogs()">🔄 Refresh</button>
+    </div>
+    <div class="tbl-toolbar">
+      <label>Search:</label>
+      <input class="gov-input" id="log-search" placeholder="Action / Details…" oninput="debounce('log')"/>
+      <div class="spacer"></div>
+    </div>
+    <div class="gov-table-wrap">
+      <table class="gov-table">
+        <thead>
+          <tr><th style="width:48px;">#</th><th style="width:120px;">Actor</th><th style="width:90px;">Role</th><th>Action</th><th>Details</th><th style="width:150px;">Time</th></tr>
+        </thead>
+        <tbody id="log-tbody"><tr><td colspan="6"><div class="gov-loading">⏳ Loading…</div></td></tr></tbody>
+      </table>
+    </div>
+    <div class="gov-pager" id="log-pager" style="display:none;"></div>
+  </div>
+
+</div><!-- gov-wrap -->
+
+<!-- ════ FOOTER ═════════════════════════════════════════ -->
+<div class="gov-footer">
+  <div class="ff-links">
+    <a href="/">Candidate Portal</a>
+    <a href="/admin">Admin Login</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms of Use</a>
+    <a href="#">Contact IT Cell</a>
+  </div>
+  © 2025 Bar Council of Uttar Pradesh. All rights reserved.<br>
+  Designed &amp; Maintained by the IT Department | Best viewed in Google Chrome (1024×768 and above)
+</div>
+
+<!-- ════ OBJECTION DETAIL MODAL ═════════════════════════ -->
+<div class="gov-modal-backdrop" id="objModal">
+  <div class="gov-modal">
+    <div class="gov-modal-head">
+      <span class="gm-title" id="objModal-title">Objection Details</span>
+      <button class="gov-modal-close" onclick="closeM('objModal')">✕</button>
+    </div>
+    <div class="gov-modal-body" id="objModal-body"></div>
+    <div class="gov-modal-foot" id="objModal-foot">
+      <button class="gb gb-grey" onclick="closeM('objModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ UPLOAD REVIEW MODAL ════════════════════════════ -->
+<div class="gov-modal-backdrop" id="uplModal">
+  <div class="gov-modal">
+    <div class="gov-modal-head">
+      <span class="gm-title" id="uplModal-title">Document Review</span>
+      <button class="gov-modal-close" onclick="closeM('uplModal')">✕</button>
+    </div>
+    <div class="gov-modal-body" id="uplModal-body"></div>
+    <div class="gov-modal-foot" id="uplModal-foot">
+      <button class="gb gb-grey" onclick="closeM('uplModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ REJECT REASON MODAL ════════════════════════════ -->
+<div class="gov-modal-backdrop" id="rejModal">
+  <div class="gov-modal" style="max-width:440px;">
+    <div class="gov-modal-head">
+      <span class="gm-title">❌ Reject Document</span>
+      <button class="gov-modal-close" onclick="closeM('rejModal')">✕</button>
+    </div>
+    <div class="gov-modal-body">
+      <div class="alert-box info show" style="margin-bottom:12px;"><p>Rejection reason is mandatory. The candidate will be notified.</p></div>
+      <div class="gf-group">
+        <label class="gf-label" for="rej-reason">Reason for Rejection <span class="req">*</span></label>
+        <textarea class="gf-textarea" id="rej-reason" rows="4" placeholder="Enter clear, specific reason…"></textarea>
+      </div>
+      <div class="alert-box" id="rejFlash"><p id="rejFlashMsg"></p></div>
+    </div>
+    <div class="gov-modal-foot">
+      <button class="gb gb-grey" onclick="closeM('rejModal')">Cancel</button>
+      <button class="gb gb-red" onclick="confirmReject()">❌ Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ REMARK MODAL ═══════════════════════════════════ -->
+<div class="gov-modal-backdrop" id="remarkModal">
+  <div class="gov-modal" style="max-width:440px;">
+    <div class="gov-modal-head">
+      <span class="gm-title" id="remarkModal-title">Add / Update Remark</span>
+      <button class="gov-modal-close" onclick="closeM('remarkModal')">✕</button>
+    </div>
+    <div class="gov-modal-body">
+      <div class="gf-group">
+        <label class="gf-label" for="remark-input">Staff Remark / Note <span class="req">*</span></label>
+        <textarea class="gf-textarea" id="remark-input" rows="4" placeholder="Enter your remark or note…"></textarea>
+      </div>
+      <div class="alert-box" id="remarkFlash"><p id="remarkFlashMsg"></p></div>
+    </div>
+    <div class="gov-modal-foot">
+      <button class="gb gb-grey" onclick="closeM('remarkModal')">Cancel</button>
+      <button class="gb gb-blue" onclick="confirmRemark()">💬 Save Remark</button>
     </div>
   </div>
 </div>
@@ -300,80 +740,99 @@ tr.overdue td { background: #fff5f5 !important; }
 <script src="/assets/main.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════
-   staff-panel.html — page-local controller
+   staff-panel.html — Government-style Controller
    ═══════════════════════════════════════════════════════ */
 
-// ── State ──────────────────────────────────────────────
-const SP = {
-  objFilter: 'all', objPage: 1,
-  uplFilter: 'all', uplPage: 1,
-  objDebounce: null, uplDebounce: null,
-  currentObj: null, currentUpl: null
+/* ── State ────────────────────────────────────────────── */
+const S = {
+  objF:'all', objP:1, objSearch:'',
+  uplF:'all', uplP:1, uplSearch:'',
+  logP:1,     logSearch:'',
+  curObj:null, curUpl:null, curRemarkCtx:null,
+  debObj:null, debUpl:null, debLog:null
 };
 
-// ── Helpers ────────────────────────────────────────────
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function decodeJwt(t) { try { return JSON.parse(atob(t.split('.')[1])); } catch(e) { return {}; } }
-function overdueClass(deadline, resolved) { return !resolved && new Date(deadline) < new Date() ? 'overdue' : ''; }
+/* ── Escape HTML ────────────────────────────────────────── */
+function h(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function gFlash(msg, type) {
-  const el = document.getElementById('globalFlash');
-  el.textContent = msg;
-  el.className = type || 'success';
-  el.style.display = 'block';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.display = 'none'; }, 3800);
-}
+/* ── JWT decode ─────────────────────────────────────────── */
+function jwt(t) { try{return JSON.parse(atob(t.split('.')[1]));}catch(e){return{};} }
 
-function btnLoad(id, loading, label) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.disabled = loading;
-  if (label) el.textContent = loading ? '⏳ …' : label;
+/* ── Flash ──────────────────────────────────────────────── */
+function gf(msg, type) {
+  const el = document.getElementById('gFlash');
+  el.textContent = msg; el.className = type||'success'; el.style.display='block';
+  clearTimeout(el._t); el._t = setTimeout(()=>el.style.display='none', 4000);
+}
+function mf(id, msgId, msg, type) {
+  const el=document.getElementById(id); const m=document.getElementById(msgId);
+  if(!el||!m)return; m.textContent=msg; el.className='alert-box show '+(type||'success');
+  clearTimeout(el._t); el._t=setTimeout(()=>{el.className='alert-box'; el.style.display='none';},4000);
 }
 
-function pagerHtml(total, page, limit, onPage) {
-  const pages = Math.ceil(total / limit);
-  if (pages <= 1) return '';
-  let h = `<button class="page-btn" ${page<=1?'disabled':''} onclick="${onPage}(${page-1})">‹</button>`;
-  for (let i=1;i<=pages;i++) {
-    if (i===1||i===pages||Math.abs(i-page)<=1) h+=`<button class="page-btn${i===page?' active':''}" onclick="${onPage}(${i})">${i}</button>`;
-    else if (Math.abs(i-page)===2) h+=`<span style="padding:0 4px;color:#94a3b8">…</span>`;
-  }
-  h += `<button class="page-btn" ${page>=pages?'disabled':''} onclick="${onPage}(${page+1})">›</button>`;
-  return h;
+/* ── Modal ──────────────────────────────────────────────── */
+function openM(id)  { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.gov-modal-backdrop').forEach(el=>{
+  el.addEventListener('click', e=>{ if(e.target===el) el.classList.remove('open'); });
+});
+
+/* ── Badge status ───────────────────────────────────────── */
+function badge(st) {
+  const m={pending:'gb-pending',approved:'gb-approved',resolved:'gb-approved',rejected:'gb-rejected',overdue:'gb-overdue',under_review:'gb-review'};
+  return `<span class="gov-badge ${m[st]||'gb-pending'}">${h(st)}</span>`;
 }
 
-function statusBadge(status) {
-  const map = { pending:'badge-pending', approved:'badge-approved', rejected:'badge-rejected', resolved:'badge-approved', under_review:'badge-under_review', objection:'badge-objection' };
-  return `<span class="badge ${map[status]||'badge-pending'}">${esc(status)}</span>`;
-}
-
-// ── Section switcher ───────────────────────────────────
-const SECTIONS = ['dashboard','objections','uploads'];
-function switchSection(id) {
-  SECTIONS.forEach(s => {
-    document.getElementById('section-'+s).style.display = s===id ? '' : 'none';
-    const sn = document.getElementById('sideNav-'+s);
-    const mt = document.getElementById('mTab-'+s);
-    if (sn) sn.classList.toggle('active', s===id);
-    if (mt) mt.classList.toggle('active', s===id);
+/* ── Tab switcher ───────────────────────────────────────── */
+const TABS = ['dashboard','objections','uploads','logs'];
+function switchTab(id) {
+  TABS.forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===id ? '' : 'none';
+    const nb=document.getElementById('nb-'+t);
+    if(nb) nb.classList.toggle('active', t===id);
   });
-  if (id==='dashboard')   loadStaffDashboard();
-  if (id==='objections')  loadObjections();
-  if (id==='uploads')     loadUploads();
+  if(id==='dashboard')  loadStaffDashboard();
+  if(id==='objections') loadObjections();
+  if(id==='uploads')    loadUploads();
+  if(id==='logs')       loadLogs();
+  document.getElementById('navLinks').classList.remove('open');
 }
 
-// ── Modal open/close ───────────────────────────────────
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.getElementById('objModal').addEventListener('click', e => { if(e.target.id==='objModal') closeModal('objModal'); });
-document.getElementById('uplModal').addEventListener('click', e => { if(e.target.id==='uplModal') closeModal('uplModal'); });
+/* ── Pagination renderer ────────────────────────────────── */
+function renderPager(pEl, total, page, limit, goPgFn) {
+  const pages = Math.ceil(total/limit);
+  if(!pages||pages<=1){ pEl.style.display='none'; return; }
+  pEl.style.display='flex';
+  let h2 = `<button ${page<=1?'disabled':''} onclick="${goPgFn}(${page-1})">‹ Prev</button>`;
+  for(let i=1;i<=pages;i++){
+    if(i===1||i===pages||Math.abs(i-page)<=1) h2+=`<button class="${i===page?'active':''}" onclick="${goPgFn}(${i})">${i}</button>`;
+    else if(Math.abs(i-page)===2) h2+=`<span style="padding:0 6px;color:#aaa">…</span>`;
+  }
+  h2+=`<button ${page>=pages?'disabled':''} onclick="${goPgFn}(${page+1})">Next ›</button>`;
+  h2+=`<span class="pg-info">Page ${page} of ${pages} (${total} records)</span>`;
+  pEl.innerHTML = h2;
+}
 
-// ── Logout ─────────────────────────────────────────────
+/* ── Debounce ───────────────────────────────────────────── */
+function debounce(type) {
+  const field = {obj:'obj-search',upl:'upl-search',log:'log-search'}[type];
+  const val = document.getElementById(field).value.trim();
+  const delay = 380;
+  if(type==='obj'){ S.objSearch=val; clearTimeout(S.debObj); S.debObj=setTimeout(()=>{S.objP=1;loadObjections();},delay); }
+  if(type==='upl'){ S.uplSearch=val; clearTimeout(S.debUpl); S.debUpl=setTimeout(()=>{S.uplP=1;loadUploads();},delay); }
+  if(type==='log'){ S.logSearch=val; clearTimeout(S.debLog); S.debLog=setTimeout(()=>{S.logP=1;loadLogs();},delay); }
+}
+
+/* ── Filter setters ─────────────────────────────────────── */
+function setObjF(f,el){ S.objF=f;S.objP=1; document.querySelectorAll('#tab-objections .filter-pill').forEach(b=>b.classList.remove('active')); el.classList.add('active'); loadObjections(); }
+function setUplF(f,el){ S.uplF=f;S.uplP=1; document.querySelectorAll('#tab-uploads .filter-pill').forEach(b=>b.classList.remove('active')); el.classList.add('active'); loadUploads(); }
+
+/* ── Pagination go functions ────────────────────────────── */
+function objGo(p){ S.objP=p; loadObjections(); }
+function uplGo(p){ S.uplP=p; loadUploads(); }
+function logGo(p){ S.logP=p; loadLogs(); }
+
+/* ── Logout ─────────────────────────────────────────────── */
 function doLogout() {
   localStorage.removeItem('staffToken');
   localStorage.removeItem('adminToken');
@@ -381,360 +840,358 @@ function doLogout() {
   window.location.href = '/admin';
 }
 
-// ── Filters / search ───────────────────────────────────
-function setObjFilter(f, el) {
-  SP.objFilter = f; SP.objPage = 1;
-  document.querySelectorAll('#section-objections .filter-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  loadObjections();
-}
-function setUplFilter(f, el) {
-  SP.uplFilter = f; SP.uplPage = 1;
-  document.querySelectorAll('#section-uploads .filter-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  loadUploads();
-}
-function debounceFn(type) {
-  clearTimeout(type==='obj' ? SP.objDebounce : SP.uplDebounce);
-  const t = setTimeout(() => { type==='obj' ? (SP.objPage=1,loadObjections()) : (SP.uplPage=1,loadUploads()); }, 350);
-  if (type==='obj') SP.objDebounce=t; else SP.uplDebounce=t;
-}
-function objGoPage(p) { SP.objPage=p; loadObjections(); }
-function uplGoPage(p) { SP.uplPage=p; loadUploads(); }
-
-// ══════════════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════════════════ */
 async function loadStaffDashboard() {
   try {
-    const res = await StaffAPI.get('/api/staff/dashboard');
-    const { stats, recent_objections=[], recent_uploads=[], recent_logs=[] } = res.data;
+    const r = await StaffAPI.get('/api/staff/dashboard');
+    const { stats, recent_objections=[], recent_uploads=[], recent_logs=[] } = r.data;
 
-    document.getElementById('d-pobj').textContent  = stats.pending_objections ?? 0;
-    document.getElementById('d-pupl').textContent  = stats.pending_uploads    ?? 0;
-    document.getElementById('d-today').textContent = stats.completed_today    ?? 0;
+    document.getElementById('s-pobj').textContent  = stats.pending_objections ?? 0;
+    document.getElementById('s-oobj').textContent  = stats.overdue_objections ?? 0;
+    document.getElementById('s-pupl').textContent  = stats.pending_uploads    ?? 0;
+    document.getElementById('s-today').textContent = stats.completed_today    ?? 0;
     document.getElementById('badge-obj').textContent = stats.pending_objections ?? 0;
     document.getElementById('badge-upl').textContent = stats.pending_uploads    ?? 0;
 
-    // Recent objections mini-list
-    const oEl = document.getElementById('dash-recent-obj');
-    oEl.innerHTML = recent_objections.length ? recent_objections.slice(0,5).map(o => {
-      const over = !o.resolved && new Date(o.deadline)<new Date();
-      return `<div class="recent-app">
-        <div class="recent-avatar">${esc((o.name||'?')[0].toUpperCase())}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="recent-name">${esc(o.application_no)}</div>
-          <div class="recent-no">${esc(o.type)} · Due ${fmtDate(o.deadline)}</div>
-        </div>
-        ${statusBadge(o.resolved?'resolved':over?'overdue':'pending')}
-      </div>`;
-    }).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><p>No objections</p></div>';
+    /* Notices panel */
+    const notices = [];
+    if ((stats.overdue_objections||0) > 0) notices.push({ urgent:true, text:`${stats.overdue_objections} objection(s) are OVERDUE — immediate action required.` });
+    if ((stats.pending_uploads||0) > 0)    notices.push({ urgent:false, text:`${stats.pending_uploads} document(s) pending review.` });
+    if ((stats.pending_objections||0) > 0) notices.push({ urgent:false, text:`${stats.pending_objections} pending objection(s) awaiting resolution.` });
+    const np = document.getElementById('noticePanel');
+    const nl = document.getElementById('noticeList');
+    if (notices.length) {
+      np.style.display = '';
+      nl.innerHTML = notices.map(n=>`<div class="notice-item${n.urgent?' urgent':''}">${h(n.text)}</div>`).join('');
+    } else { np.style.display = 'none'; }
 
-    // Recent uploads mini-list
-    const uEl = document.getElementById('dash-recent-upl');
-    uEl.innerHTML = recent_uploads.length ? recent_uploads.slice(0,5).map(u => `
-      <div class="recent-app">
-        <div class="recent-avatar">${esc((u.name||'?')[0].toUpperCase())}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="recent-name">${esc(u.application_no)}</div>
-          <div class="recent-no">${esc(u.doc_type)} · ${fmtDate(u.uploaded_at)}</div>
-        </div>
-        ${statusBadge(u.review_status||'pending')}
-      </div>
-    `).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><p>No uploads</p></div>';
+    /* Recent objections */
+    const oEl = document.getElementById('d-recent-obj');
+    oEl.innerHTML = recent_objections.length
+      ? `<div class="mini-card-list">${recent_objections.slice(0,5).map(o=>{
+          const over = !o.resolved && new Date(o.deadline)<new Date();
+          return `<div class="mini-card-row">
+            <span class="mc-no">${h(o.application_no)}</span>
+            <span class="mc-name">${h(o.name)} &mdash; <em>${h(o.type)}</em></span>
+            <span class="mc-date">${badge(o.resolved?'resolved':over?'overdue':'pending')}</span>
+          </div>`;
+        }).join('')}</div>`
+      : '<div class="gov-empty"><div class="ei">📭</div>No objections found</div>';
 
-    // Activity
-    const aEl = document.getElementById('dash-activity');
-    aEl.innerHTML = recent_logs.length ? recent_logs.slice(0,5).map(l => `
-      <div class="log-item">
-        <span style="font-size:14px;">🔵</span>
-        <span class="log-action" style="flex:1;">${esc(l.action)}${l.details?' — <span class="log-detail">'+esc(l.details)+'</span>':''}</span>
-        <span class="log-time">${fmtDateTime(l.created_at)}</span>
-      </div>
-    `).join('') : '<div class="empty-state"><div class="empty-icon">🕒</div><p>No recent activity</p></div>';
+    /* Recent uploads */
+    const uEl = document.getElementById('d-recent-upl');
+    uEl.innerHTML = recent_uploads.length
+      ? `<div class="mini-card-list">${recent_uploads.slice(0,5).map(u=>`
+          <div class="mini-card-row">
+            <span class="mc-no">${h(u.application_no)}</span>
+            <span class="mc-name">${h(u.name)} &mdash; <em>${h(u.doc_type)}</em></span>
+            <span class="mc-date">${badge(u.review_status||'pending')}</span>
+          </div>`).join('')}</div>`
+      : '<div class="gov-empty"><div class="ei">📭</div>No uploads found</div>';
 
-  } catch(e) { gFlash('❌ Dashboard load failed: '+e.message, 'error'); }
+    /* Activity log */
+    const aEl = document.getElementById('d-activity');
+    aEl.innerHTML = recent_logs.length
+      ? `<div class="log-list">${recent_logs.slice(0,5).map(l=>`
+          <div class="log-row">
+            <div class="log-dot"></div>
+            <div class="log-action"><b>${h(l.action)}</b>${l.details?' — '+h(l.details):''}</div>
+            <div class="log-time">${fmtDateTime(l.created_at)}</div>
+          </div>`).join('')}</div>`
+      : '<div class="gov-empty"><div class="ei">🕒</div>No activity recorded yet</div>';
+
+  } catch(e) { gf('❌ Dashboard load failed: '+e.message,'error'); }
 }
 
-// ══════════════════════════════════════════════════════
-// OBJECTIONS
-// ══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   OBJECTIONS
+   ═══════════════════════════════════════════════════════ */
 async function loadObjections() {
-  const search = document.getElementById('obj-search').value.trim();
-  const tbody  = document.getElementById('obj-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr>';
+  const tbody = document.getElementById('obj-tbody');
+  tbody.innerHTML = '<tr><td colspan="8"><div class="gov-loading">⏳ Loading…</div></td></tr>';
   try {
-    const url = `/api/staff/objections?filter=${SP.objFilter}&search=${encodeURIComponent(search)}&page=${SP.objPage}&limit=20`;
+    const url = `/api/staff/objections?filter=${S.objF}&search=${encodeURIComponent(S.objSearch)}&page=${S.objP}&limit=20`;
     const res = await StaffAPI.get(url);
     const { objections=[], total=0, page=1, limit=20 } = res.data;
-    if (!objections.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>No objections found</p></div></td></tr>';
-      document.getElementById('obj-pager').innerHTML = '';
-      return;
+    if(!objections.length){
+      tbody.innerHTML='<tr><td colspan="8"><div class="gov-empty"><div class="ei">📭</div>No objections found matching criteria.</div></td></tr>';
+      document.getElementById('obj-pager').style.display='none'; return;
     }
-    tbody.innerHTML = objections.map(o => {
+    tbody.innerHTML = objections.map(o=>{
       const over = !o.resolved && new Date(o.deadline)<new Date();
-      const badge = o.resolved ? statusBadge('resolved') : over ? statusBadge('overdue') : statusBadge('pending');
-      return `<tr class="${over&&!o.resolved?'overdue':''}">
+      const st   = o.resolved ? 'resolved' : over ? 'overdue' : 'pending';
+      return `<tr class="${over&&!o.resolved?'overdue-row':''}">
         <td><b>#${o.id}</b></td>
-        <td><code style="font-size:11px;">${esc(o.application_no)}</code></td>
-        <td class="truncate">${esc(o.name)}</td>
-        <td style="font-size:12px;">${esc(o.type)}</td>
-        <td>${badge}</td>
-        <td style="font-size:12px;${over&&!o.resolved?'color:#dc2626;font-weight:700;':''}">${fmtDate(o.deadline)}</td>
-        <td style="text-align:center;">${o.upload_count??0}</td>
+        <td><code style="font-size:11px;">${h(o.application_no)}</code></td>
+        <td class="trunc" title="${h(o.name)}">${h(o.name)}</td>
+        <td style="font-size:12px;">${h(o.type)}</td>
+        <td>${badge(st)}</td>
+        <td style="font-size:12px;${over&&!o.resolved?'color:#b91c1c;font-weight:700;':''}">${fmtDate(o.deadline)}</td>
+        <td style="text-align:center;">${o.upload_count||0}</td>
         <td>
-          <div class="action-row">
-            <button class="btn btn-outline btn-xs" onclick='openObjModal(${JSON.stringify(o).replace(/'/g,"&#39;")})'>👁 View</button>
+          <div class="btn-row">
+            <button class="gb gb-blue gb-sm" onclick='openObjModal(${JSON.stringify(o).replace(/'/g,"&#39;")})'>🔍 View</button>
             ${!o.resolved
-              ? `<button class="btn btn-success btn-xs" onclick="quickObjAction(${o.id},'resolve','')">✅ Resolve</button>`
-              : `<button class="btn btn-outline btn-xs" onclick="quickObjAction(${o.id},'reopen','')">🔁 Reopen</button>`
+              ? `<button class="gb gb-green gb-sm" onclick="qObjAction(${o.id},'resolve')">✅ Resolve</button>`
+              : `<button class="gb gb-grey gb-sm"  onclick="qObjAction(${o.id},'reopen')">🔁 Reopen</button>`
             }
           </div>
         </td>
       </tr>`;
     }).join('');
-    document.getElementById('obj-pager').innerHTML = pagerHtml(total, page, limit, 'objGoPage');
+    renderPager(document.getElementById('obj-pager'), total, page, limit, 'objGo');
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="alert alert-error">❌ ${esc(e.message)}</div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="8"><div class="alert-box error show" style="margin:12px;"><p>❌ ${h(e.message)}</p></div></td></tr>`;
   }
 }
 
-async function quickObjAction(id, action, remark) {
+async function qObjAction(id, action) {
   try {
-    await updateObjectionStatus(id, action, remark);
-    gFlash(`✅ Objection #${id} ${action}d`, 'success');
-    loadObjections();
-    // refresh dashboard badges
-    StaffAPI.get('/api/staff/dashboard').then(r=>{
-      document.getElementById('badge-obj').textContent = r.data.stats.pending_objections??0;
-    }).catch(()=>{});
-  } catch(e) { gFlash('❌ '+e.message, 'error'); }
+    await updateObjectionStatus(id, action, '');
+    gf(`✅ Objection #${id} ${action}d successfully`,'success');
+    loadObjections(); refreshBadges();
+  } catch(e){ gf('❌ '+e.message,'error'); }
 }
 
 function openObjModal(o) {
-  SP.currentObj = o;
+  S.curObj = o;
   const over = !o.resolved && new Date(o.deadline)<new Date();
   document.getElementById('objModal-title').textContent = `Objection #${o.id} — ${o.application_no}`;
-
   document.getElementById('objModal-body').innerHTML = `
-    <div class="detail-grid" style="margin-bottom:16px;">
-      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${esc(o.application_no)}</code></span></div>
-      <div class="detail-row"><span class="detail-key">Candidate</span><span class="detail-val">${esc(o.name)}</span></div>
-      <div class="detail-row"><span class="detail-key">District</span><span class="detail-val">${esc(o.district||'—')}</span></div>
-      <div class="detail-row"><span class="detail-key">Type</span><span class="detail-val">${esc(o.type)}</span></div>
-      <div class="detail-row"><span class="detail-key">Deadline</span><span class="detail-val" style="${over?'color:#dc2626;font-weight:700;':''}">${fmtDate(o.deadline)}${over?' ⚠️':''}</span></div>
-      <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${o.resolved?'✅ Resolved':'⏳ Pending'}</span></div>
-      <div class="detail-row"><span class="detail-key">Docs Uploaded</span><span class="detail-val">${o.upload_count??0}</span></div>
-      <div class="detail-row"><span class="detail-key">Created</span><span class="detail-val">${fmtDateTime(o.created_at)}</span></div>
-    </div>
-
-    <div class="form-group">
-      <div class="form-label">Original Remark</div>
-      <div class="remark-bubble">${esc(o.remark||'—')}</div>
-    </div>
-
-    ${o.staff_remark ? `<div class="form-group"><div class="form-label">Previous Staff Remark</div><div class="remark-bubble staff">${esc(o.staff_remark)}</div></div>` : ''}
-
-    <div class="form-group">
-      <label class="form-label" for="obj-remark-input">Staff Remark / Note</label>
-      <textarea class="form-textarea" id="obj-remark-input" rows="3" placeholder="Write a remark, note or reason…">${esc(o.staff_remark||'')}</textarea>
-    </div>
-    <div id="objModalFlash" class="flash" style="display:none;margin-top:8px;"></div>
+    <table class="det-table">
+      <tr><td>Application No</td><td><code>${h(o.application_no)}</code></td></tr>
+      <tr><td>Candidate Name</td><td>${h(o.name)}</td></tr>
+      <tr><td>District</td><td>${h(o.district||'—')}</td></tr>
+      <tr><td>Objection Type</td><td>${h(o.type)}</td></tr>
+      <tr><td>Deadline</td><td style="${over?'color:#b91c1c;font-weight:700;':''}">${fmtDate(o.deadline)}${over?' &nbsp;<span style="color:#b91c1c;">⚠️ OVERDUE</span>':''}</td></tr>
+      <tr><td>Status</td><td>${badge(o.resolved?'resolved':over?'overdue':'pending')}</td></tr>
+      <tr><td>Documents Uploaded</td><td>${o.upload_count||0}</td></tr>
+      <tr><td>Created On</td><td>${fmtDateTime(o.created_at)}</td></tr>
+    </table>
+    <p class="gf-label" style="margin-bottom:6px;">Original Remark:</p>
+    <div class="remark-display">${h(o.remark||'—')}</div>
+    ${o.staff_remark?`<p class="gf-label" style="margin-bottom:6px;">Previous Staff Remark:</p><div class="remark-display staff">${h(o.staff_remark)}</div>`:''}
   `;
-
-  const footer = document.getElementById('objModal-footer');
-  footer.innerHTML = `
-    <button class="btn btn-outline" onclick="closeModal('objModal')">Close</button>
-    <button class="btn btn-outline btn-sm" id="btnRemark" onclick="modalObjAction('remark')">💬 Save Remark</button>
+  document.getElementById('objModal-foot').innerHTML = `
+    <button class="gb gb-grey" onclick="closeM('objModal')">Close</button>
+    <button class="gb gb-grey gb-sm" onclick="openRemarkModal('obj')">💬 Add Remark</button>
     ${!o.resolved
-      ? `<button class="btn btn-success btn-sm" id="btnResolve" onclick="modalObjAction('resolve')">✅ Mark Resolved</button>`
-      : `<button class="btn btn-danger btn-sm"  id="btnReopen"  onclick="modalObjAction('reopen')">🔁 Reopen</button>`
+      ? `<button class="gb gb-green" onclick="modalObjAction('resolve')">✅ Mark Resolved</button>`
+      : `<button class="gb gb-red"   onclick="modalObjAction('reopen')">🔁 Reopen</button>`
     }
   `;
-  openModal('objModal');
+  openM('objModal');
 }
 
 async function modalObjAction(action) {
-  const o = SP.currentObj;
-  if (!o) return;
-  const remark = document.getElementById('obj-remark-input')?.value?.trim()||'';
-  const flashId = 'objModalFlash';
-  if (action==='remark'&&!remark) { showFlash(flashId,'Remark cannot be empty','error'); return; }
+  const o = S.curObj; if(!o) return;
   try {
-    await updateObjectionStatus(o.id, action, remark);
-    showFlash(flashId, `✅ ${action==='resolve'?'Resolved':action==='reopen'?'Reopened':'Remark saved'}!`, 'success');
-    setTimeout(()=>{ closeModal('objModal'); loadObjections(); }, 800);
-  } catch(e) { showFlash(flashId, '❌ '+e.message, 'error'); }
+    await updateObjectionStatus(o.id, action, '');
+    gf(`✅ Objection ${action}d successfully`,'success');
+    closeM('objModal'); loadObjections(); refreshBadges();
+  } catch(e){ gf('❌ '+e.message,'error'); }
 }
 
-// ══════════════════════════════════════════════════════
-// UPLOADS
-// ══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   UPLOADS
+   ═══════════════════════════════════════════════════════ */
 async function loadUploads() {
-  const search = document.getElementById('upl-search').value.trim();
-  const tbody  = document.getElementById('upl-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr>';
+  const tbody = document.getElementById('upl-tbody');
+  tbody.innerHTML = '<tr><td colspan="8"><div class="gov-loading">⏳ Loading…</div></td></tr>';
   try {
-    const url = `/api/staff/uploads?filter=${SP.uplFilter}&search=${encodeURIComponent(search)}&page=${SP.uplPage}&limit=20`;
+    const url = `/api/staff/uploads?filter=${S.uplF}&search=${encodeURIComponent(S.uplSearch)}&page=${S.uplP}&limit=20`;
     const res = await StaffAPI.get(url);
     const { uploads=[], total=0, page=1, limit=20 } = res.data;
-    if (!uploads.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>No uploads found</p></div></td></tr>';
-      document.getElementById('upl-pager').innerHTML = '';
-      return;
+    if(!uploads.length){
+      tbody.innerHTML='<tr><td colspan="8"><div class="gov-empty"><div class="ei">📭</div>No uploads found matching criteria.</div></td></tr>';
+      document.getElementById('upl-pager').style.display='none'; return;
     }
-    tbody.innerHTML = uploads.map(u => {
-      const ext = (u.file_name||'').split('.').pop().toLowerCase();
-      const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
-      const isPdf = ext==='pdf';
-      const fileIcon = isImg?'🖼️':isPdf?'📄':'📎';
+    tbody.innerHTML = uploads.map(u=>{
+      const ext=(u.file_name||'').split('.').pop().toLowerCase();
+      const isImg=['jpg','jpeg','png','gif','webp'].includes(ext);
+      const fileUrl=`/uploads/verified/${encodeURIComponent(u.file_name||'')}`;
+      const icon = isImg?'🖼️':ext==='pdf'?'📄':'📎';
       return `<tr>
         <td><b>#${u.id}</b></td>
-        <td><code style="font-size:11px;">${esc(u.application_no)}</code></td>
-        <td class="truncate">${esc(u.name)}</td>
-        <td style="font-size:12px;">${esc(u.doc_type)}</td>
-        <td><a href="/uploads/verified/${esc(u.file_name)}" target="_blank" title="${esc(u.original_name)}" style="text-decoration:none;">${fileIcon} <span style="font-size:11px;">${esc((u.original_name||'').substring(0,18))}…</span></a></td>
-        <td>${statusBadge(u.review_status||'pending')}</td>
-        <td class="truncate" style="font-size:11px;color:#64748b;" title="${esc(u.staff_remark)}">${esc((u.staff_remark||'').substring(0,30))||'—'}</td>
+        <td><code style="font-size:11px;">${h(u.application_no)}</code></td>
+        <td class="trunc">${h(u.name)}</td>
+        <td style="font-size:12px;">${h(u.doc_type)}</td>
+        <td><a class="file-link" href="${fileUrl}" target="_blank" title="${h(u.original_name)}">${icon} View File ↗</a></td>
+        <td>${badge(u.review_status||'pending')}</td>
+        <td class="trunc" style="font-size:11px;color:#555;" title="${h(u.staff_remark)}">${h((u.staff_remark||'').substring(0,30))||'—'}</td>
         <td>
-          <div class="action-row">
-            <button class="btn btn-outline btn-xs" onclick='openUplModal(${JSON.stringify(u).replace(/'/g,"&#39;")})'>👁 Review</button>
-            ${u.review_status==='pending'
-              ? `<button class="btn btn-success btn-xs" onclick="quickUplAction(${u.id},'approve','')">✅</button>
-                 <button class="btn btn-danger btn-xs"  onclick="openUplRejectPrompt(${JSON.stringify(u).replace(/'/g,"&#39;")})">❌</button>`
-              : ''
-            }
+          <div class="btn-row">
+            <button class="gb gb-blue gb-sm" onclick='openUplModal(${JSON.stringify(u).replace(/'/g,"&#39;")})'>🔍 Review</button>
+            ${u.review_status==='pending'?`
+              <button class="gb gb-green gb-sm" onclick="qUplAction(${u.id},'approve')">✅</button>
+              <button class="gb gb-red   gb-sm" onclick="openRejModal(${JSON.stringify(u).replace(/'/g,'&#39;')})">❌</button>
+            `:''}
           </div>
         </td>
       </tr>`;
     }).join('');
-    document.getElementById('upl-pager').innerHTML = pagerHtml(total, page, limit, 'uplGoPage');
+    renderPager(document.getElementById('upl-pager'), total, page, limit, 'uplGo');
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="alert alert-error">❌ ${esc(e.message)}</div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="8"><div class="alert-box error show" style="margin:12px;"><p>❌ ${h(e.message)}</p></div></td></tr>`;
   }
 }
 
-async function quickUplAction(id, action, remark) {
+async function qUplAction(id, action, remark) {
+  if(action==='reject'&&!remark){ gf('❌ Rejection reason required','error'); return; }
   try {
-    await updateUploadStatus(id, action, remark);
-    gFlash(`✅ Upload #${id} ${action}d`, 'success');
-    loadUploads();
-    StaffAPI.get('/api/staff/dashboard').then(r=>{
-      document.getElementById('badge-upl').textContent = r.data.stats.pending_uploads??0;
-    }).catch(()=>{});
-  } catch(e) { gFlash('❌ '+e.message, 'error'); }
+    await updateUploadStatus(id, action, remark||'');
+    gf(`✅ Upload #${id} ${action}d`,'success');
+    loadUploads(); refreshBadges();
+  } catch(e){ gf('❌ '+e.message,'error'); }
 }
 
-function openUplRejectPrompt(u) {
-  SP.currentUpl = u;
-  document.getElementById('uplModal-title').textContent = `Reject Document #${u.id}`;
-  document.getElementById('uplModal-body').innerHTML = `
-    <div class="alert alert-warning" style="margin-bottom:14px;">⚠️ You are about to reject this document. A reason is required.</div>
-    <div class="detail-grid" style="margin-bottom:14px;">
-      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${esc(u.application_no)}</code></span></div>
-      <div class="detail-row"><span class="detail-key">Document Type</span><span class="detail-val">${esc(u.doc_type)}</span></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="rej-reason">Rejection Reason <span class="required">*</span></label>
-      <textarea class="form-textarea" id="rej-reason" rows="3" placeholder="e.g. Document is blurry, wrong document submitted…"></textarea>
-    </div>
-    <div id="uplModalFlash" class="flash" style="display:none;"></div>
-  `;
-  document.getElementById('uplModal-footer').innerHTML = `
-    <button class="btn btn-outline" onclick="closeModal('uplModal')">Cancel</button>
-    <button class="btn btn-danger" onclick="confirmReject()">❌ Confirm Reject</button>
-  `;
-  openModal('uplModal');
+function openRejModal(u) {
+  S.curUpl = u;
+  document.getElementById('rej-reason').value = '';
+  document.getElementById('rejFlash').className = 'alert-box';
+  openM('rejModal');
 }
 
 async function confirmReject() {
-  const reason = document.getElementById('rej-reason')?.value?.trim()||'';
-  if (!reason) { showFlash('uplModalFlash','Rejection reason is required','error'); return; }
+  const reason = document.getElementById('rej-reason').value.trim();
+  if(!reason){ mf('rejFlash','rejFlashMsg','Rejection reason is required.','error'); return; }
   try {
-    await updateUploadStatus(SP.currentUpl.id, 'reject', reason);
-    closeModal('uplModal');
-    gFlash(`✅ Upload #${SP.currentUpl.id} rejected`, 'success');
-    loadUploads();
-  } catch(e) { showFlash('uplModalFlash','❌ '+e.message,'error'); }
+    await updateUploadStatus(S.curUpl.id, 'reject', reason);
+    closeM('rejModal');
+    gf(`✅ Upload #${S.curUpl.id} rejected`,'success');
+    loadUploads(); refreshBadges();
+  } catch(e){ mf('rejFlash','rejFlashMsg','❌ '+e.message,'error'); }
 }
 
 function openUplModal(u) {
-  SP.currentUpl = u;
-  const ext = (u.file_name||'').split('.').pop().toLowerCase();
-  const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
-  const fileUrl = `/uploads/verified/${encodeURIComponent(u.file_name||'')}`;
-
+  S.curUpl = u;
+  const ext=(u.file_name||'').split('.').pop().toLowerCase();
+  const isImg=['jpg','jpeg','png','gif','webp'].includes(ext);
+  const fileUrl=`/uploads/verified/${encodeURIComponent(u.file_name||'')}`;
   document.getElementById('uplModal-title').textContent = `Document Review — #${u.id} (${u.application_no})`;
   document.getElementById('uplModal-body').innerHTML = `
-    <div class="file-preview-wrap" style="margin-bottom:14px;">
+    <div class="file-preview-zone">
       ${isImg
-        ? `<img src="${fileUrl}" alt="document preview" onerror="this.parentElement.innerHTML='<div class=\\'no-preview\\'>Preview unavailable — <a href=\\'${fileUrl}\\' target=\\'_blank\\'>Download ↗</a></div>'">`
-        : `<div class="no-preview">📄 <a href="${fileUrl}" target="_blank" style="color:#003580;font-weight:700;">Open / Download File ↗</a></div>`
+        ? `<img src="${fileUrl}" alt="document" onerror="this.parentElement.innerHTML='<p style=\\'color:#555;padding:20px;\\'>Preview unavailable &mdash; <a class=\\'file-link\\' href=\\'${fileUrl}\\' target=\\'_blank\\'>Open file ↗</a></p>'">`
+        : `<p>📄 <a class="file-link" href="${fileUrl}" target="_blank">Open / Download File ↗</a></p>`
       }
     </div>
-    <div class="detail-grid" style="margin-bottom:14px;">
-      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${esc(u.application_no)}</code></span></div>
-      <div class="detail-row"><span class="detail-key">Candidate</span><span class="detail-val">${esc(u.name)}</span></div>
-      <div class="detail-row"><span class="detail-key">Document Type</span><span class="detail-val">${esc(u.doc_type)}</span></div>
-      <div class="detail-row"><span class="detail-key">Section</span><span class="detail-val">${esc(u.section_code)}</span></div>
-      <div class="detail-row"><span class="detail-key">Objection</span><span class="detail-val">${esc(u.objection_type||'—')}</span></div>
-      <div class="detail-row"><span class="detail-key">Uploaded</span><span class="detail-val">${fmtDateTime(u.uploaded_at)}</span></div>
-      <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${statusBadge(u.review_status||'pending')}</span></div>
-      <div class="detail-row"><span class="detail-key">File</span><span class="detail-val" style="font-size:11px;">${esc(u.original_name)}</span></div>
-    </div>
-
-    ${u.staff_remark ? `<div class="form-group"><div class="form-label">Previous Remark</div><div class="remark-bubble staff">${esc(u.staff_remark)}</div></div>` : ''}
-
-    <div class="form-group">
-      <label class="form-label" for="upl-remark-input">Staff Note ${u.review_status==='pending'?'<span class=\\'required\\'>(required for rejection)</span>':''}</label>
-      <textarea class="form-textarea" id="upl-remark-input" rows="3" placeholder="Approval note or rejection reason…">${esc(u.staff_remark||'')}</textarea>
-    </div>
-    <div id="uplModalFlash" class="flash" style="display:none;"></div>
+    <table class="det-table">
+      <tr><td>Application No</td><td><code>${h(u.application_no)}</code></td></tr>
+      <tr><td>Candidate</td><td>${h(u.name)}</td></tr>
+      <tr><td>District</td><td>${h(u.district||'—')}</td></tr>
+      <tr><td>Document Type</td><td>${h(u.doc_type)}</td></tr>
+      <tr><td>Section</td><td>${h(u.section_code)}</td></tr>
+      <tr><td>Objection Type</td><td>${h(u.objection_type||'—')}</td></tr>
+      <tr><td>Status</td><td>${badge(u.review_status||'pending')}</td></tr>
+      <tr><td>File Name</td><td style="font-size:11px;">${h(u.original_name)}</td></tr>
+      <tr><td>Uploaded On</td><td>${fmtDateTime(u.uploaded_at)}</td></tr>
+    </table>
+    ${u.staff_remark?`<p class="gf-label" style="margin-bottom:6px;">Previous Remark:</p><div class="remark-display staff">${h(u.staff_remark)}</div>`:''}
   `;
-
-  const footer = document.getElementById('uplModal-footer');
-  footer.innerHTML = `<button class="btn btn-outline" onclick="closeModal('uplModal')">Close</button>`;
-  if (u.review_status==='pending') {
-    footer.innerHTML += `
-      <button class="btn btn-danger btn-sm"  onclick="modalUplAction('reject')">❌ Reject</button>
-      <button class="btn btn-success btn-sm" onclick="modalUplAction('approve')">✅ Approve</button>
+  const foot = document.getElementById('uplModal-foot');
+  foot.innerHTML = `<button class="gb gb-grey" onclick="closeM('uplModal')">Close</button>
+    <button class="gb gb-grey gb-sm" onclick="openRemarkModal('upl')">💬 Remark</button>`;
+  if(u.review_status==='pending') {
+    foot.innerHTML += `
+      <button class="gb gb-red"   onclick="openRejModal(S.curUpl);closeM('uplModal')">❌ Reject</button>
+      <button class="gb gb-green" onclick="modalUplApprove()">✅ Approve</button>
     `;
-  } else {
-    footer.innerHTML += `<button class="btn btn-outline btn-sm" onclick="modalUplAction('remark')">💬 Update Note</button>`;
   }
-  openModal('uplModal');
+  openM('uplModal');
 }
 
-async function modalUplAction(action) {
-  const u = SP.currentUpl;
-  if (!u) return;
-  const remark = document.getElementById('upl-remark-input')?.value?.trim()||'';
-  if (action==='reject'&&!remark) { showFlash('uplModalFlash','Rejection reason is required','error'); return; }
+async function modalUplApprove() {
+  if(!S.curUpl) return;
   try {
-    await updateUploadStatus(u.id, action, remark);
-    showFlash('uplModalFlash', `✅ ${action==='approve'?'Approved':action==='reject'?'Rejected':'Note saved'}!`, 'success');
-    setTimeout(()=>{ closeModal('uplModal'); loadUploads(); }, 800);
-  } catch(e) { showFlash('uplModalFlash','❌ '+e.message,'error'); }
+    await updateUploadStatus(S.curUpl.id,'approve','');
+    gf(`✅ Upload #${S.curUpl.id} approved`,'success');
+    closeM('uplModal'); loadUploads(); refreshBadges();
+  } catch(e){ gf('❌ '+e.message,'error'); }
 }
 
-// ══════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   REMARK MODAL (shared for obj + upl)
+   ═══════════════════════════════════════════════════════ */
+function openRemarkModal(ctx) {
+  S.curRemarkCtx = ctx;
+  document.getElementById('remarkModal-title').textContent = ctx==='obj' ? 'Add Remark — Objection #'+(S.curObj?.id||'') : 'Add Remark — Upload #'+(S.curUpl?.id||'');
+  document.getElementById('remark-input').value = ctx==='obj' ? (S.curObj?.staff_remark||'') : (S.curUpl?.staff_remark||'');
+  document.getElementById('remarkFlash').className='alert-box';
+  openM('remarkModal');
+}
+
+async function confirmRemark() {
+  const remark = document.getElementById('remark-input').value.trim();
+  if(!remark){ mf('remarkFlash','remarkFlashMsg','Remark cannot be empty','error'); return; }
+  try {
+    if(S.curRemarkCtx==='obj') await updateObjectionStatus(S.curObj.id,'remark',remark);
+    else await updateUploadStatus(S.curUpl.id,'remark',remark);
+    gf('✅ Remark saved successfully','success');
+    closeM('remarkModal');
+    if(S.curRemarkCtx==='obj') loadObjections();
+    else loadUploads();
+  } catch(e){ mf('remarkFlash','remarkFlashMsg','❌ '+e.message,'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOGS
+   ═══════════════════════════════════════════════════════ */
+async function loadLogs() {
+  const tbody = document.getElementById('log-tbody');
+  tbody.innerHTML = '<tr><td colspan="6"><div class="gov-loading">⏳ Loading…</div></td></tr>';
+  try {
+    const url = `/api/admin/logs?search=${encodeURIComponent(S.logSearch)}&page=${S.logP}&limit=30`;
+    const res = await StaffAPI.get(url);
+    const { logs=[], total=0, page=1, limit=30 } = res.data;
+    if(!logs.length){
+      tbody.innerHTML='<tr><td colspan="6"><div class="gov-empty"><div class="ei">🕒</div>No logs found.</div></td></tr>';
+      document.getElementById('log-pager').style.display='none'; return;
+    }
+    tbody.innerHTML = logs.map((l,i)=>`
+      <tr>
+        <td>${(page-1)*limit+i+1}</td>
+        <td><b>${h(l.actor)}</b></td>
+        <td><span class="gov-badge ${l.role==='admin'?'gb-review':'gb-pending'}">${h(l.role)}</span></td>
+        <td>${h(l.action)}</td>
+        <td style="font-size:12px;color:#555;">${h(l.details||'—')}</td>
+        <td style="font-size:12px;">${fmtDateTime(l.created_at)}</td>
+      </tr>`).join('');
+    renderPager(document.getElementById('log-pager'), total, page, limit, 'logGo');
+  } catch(e) {
+    tbody.innerHTML=`<tr><td colspan="6"><div class="alert-box error show" style="margin:12px;"><p>❌ ${h(e.message)}</p></div></td></tr>`;
+  }
+}
+
+/* ── Refresh sidebar badges ──────────────────────────────── */
+async function refreshBadges() {
+  try {
+    const r = await StaffAPI.get('/api/staff/dashboard');
+    document.getElementById('badge-obj').textContent = r.data.stats.pending_objections??0;
+    document.getElementById('badge-upl').textContent = r.data.stats.pending_uploads??0;
+  } catch(_){}
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════ */
 (function init() {
   const tok = getPrivToken();
-  if (tok) {
-    const p = decodeJwt(tok);
-    const name = p.username || 'Staff';
-    const role = p.role || 'staff';
-    document.getElementById('sideName').textContent   = name;
-    document.getElementById('sideRole').textContent   = role;
-    document.getElementById('sideAvatar').textContent = name[0].toUpperCase();
-    document.getElementById('hdrName').textContent    = name;
-    document.getElementById('hdrRole').textContent    = role;
-    document.getElementById('hdrAvatar').textContent  = name[0].toUpperCase();
+  if(tok) {
+    const p = jwt(tok);
+    const name = p.username||'Staff';
+    const role = p.role||'staff';
+    document.getElementById('hdrUser').textContent     = name + ' (' + role + ')';
+    document.getElementById('staffChip').textContent   = (role==='admin'?'👑':'⚙️') + ' ' + name + ' — ' + role.toUpperCase();
   }
-  switchSection('dashboard');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('hdrDate').textContent  = dateStr;
+  document.getElementById('todayDate').textContent = dateStr;
+
+  switchTab('dashboard');
 })();
 </script>
 </body>
