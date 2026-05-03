@@ -76,10 +76,17 @@
     <a class="nav-link" id="snav-staff"   data-section="staff" href="#">
       <span class="nav-icon">👥</span> Staff
     </a>
-    <a class="nav-link" id="snav-logs"    data-section="logs" href="#">
+    <a class="nav-link" id="snav-logs"        data-section="logs" href="#">
       <span class="nav-icon">🕒</span> Activity Logs
     </a>
-    <a class="nav-link" id="snav-settings" data-section="settings" href="#">
+    <a class="nav-link" id="snav-objections" data-section="objections" href="#">
+      <span class="nav-icon">⚠️</span> Objections
+      <span class="nav-badge" id="nav-badge-obj" style="display:none;">!</span>
+    </a>
+    <a class="nav-link" id="snav-uploads"    data-section="uploads" href="#">
+      <span class="nav-icon">📁</span> Uploads
+    </a>
+    <a class="nav-link" id="snav-settings"   data-section="settings" href="#">
       <span class="nav-icon">⚙️</span> Settings
     </a>
   </nav>
@@ -349,9 +356,99 @@
     </div>
   </div>
 
-  <!-- ── SETTINGS SECTION ───────────────────────────────── -->
-  <div class="page-body admin-section" id="settings">
+  <!-- ── OBJECTIONS SECTION ────────────────────────────── -->
+  <div class="page-body admin-section" id="objections">
+
     <div class="panel" style="max-width:720px;margin-bottom:16px;">
+      <div class="panel-header"><span class="panel-title">➕ Add Objection</span></div>
+      <div class="panel-body">
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Application No <span class="required">*</span></label>
+            <input class="form-input" id="objAppNo" placeholder="UP12345/25"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Objection Type <span class="required">*</span></label>
+            <select class="form-select" id="objType">
+              <option value="document_missing">Document Missing</option>
+              <option value="signature_mismatch">Signature Mismatch</option>
+              <option value="photo_issue">Photo Issue</option>
+              <option value="fee_pending">Fee Pending</option>
+              <option value="name_mismatch">Name Mismatch</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Remark</label>
+          <input class="form-input" id="objRemark" placeholder="Additional notes (optional)…"/>
+        </div>
+        <button class="btn btn-primary" onclick="doAddObjection()">⚠️ Add Objection</button>
+        <div id="objAddMsg" class="msg" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
+        <span class="panel-title">⚠️ All Objections</span>
+        <div class="toolbar" style="flex:1;justify-content:flex-end;">
+          <div class="search-box">
+            <span>🔍</span>
+            <input id="objSearch" placeholder="App No / Name…" oninput="debounceObj()"/>
+          </div>
+          <select class="form-select" id="objStatusFilter" onchange="loadObjections()" style="width:130px;">
+            <option value="">All</option>
+            <option value="unresolved">Unresolved</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>App No</th><th>Name</th><th>Type</th><th>Remark</th><th>Deadline</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="objTbody"><tr><td colspan="7"><div class="loading-overlay">⏳</div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="objPager" style="padding:12px 18px;"></div>
+    </div>
+
+  </div><!-- /objections -->
+
+  <!-- ── UPLOADS SECTION ────────────────────────────────── -->
+  <div class="page-body admin-section" id="uploads">
+
+    <div class="panel" style="max-width:720px;margin-bottom:16px;">
+      <div class="panel-header"><span class="panel-title">📊 Upload Applications (Excel)</span></div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Excel File (.xlsx / .xls) — max 10 MB</label>
+          <input class="file-input" type="file" id="excelFile" accept=".xlsx,.xls"/>
+        </div>
+        <button class="btn btn-primary" id="excelBtn" onclick="doExcelUpload()">📤 Upload Excel</button>
+        <div id="excelMsg" class="msg" style="margin-top:10px;"></div>
+        <div class="output-box" id="excelOut" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="max-width:720px;margin-bottom:16px;">
+      <div class="panel-header"><span class="panel-title">📄 Upload Certificate (PDF / Image)</span></div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Application No <span class="required">*</span></label>
+          <input class="form-input" id="certAppNo" placeholder="UP12345/25"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certificate File (PDF / JPG / PNG) — max 10 MB</label>
+          <input class="file-input" type="file" id="certFile" accept=".pdf,.jpg,.jpeg,.png"/>
+        </div>
+        <button class="btn btn-primary" id="certBtn" onclick="doCertUpload()">📤 Upload Certificate</button>
+        <div id="certMsg" class="msg" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="max-width:720px;">
       <div class="panel-header"><span class="panel-title">🔒 Override Upload Access</span></div>
       <div class="panel-body">
         <div class="form-row" style="margin-bottom:12px;">
@@ -379,18 +476,10 @@
       </div>
     </div>
 
-    <div class="panel" style="max-width:720px;margin-bottom:16px;">
-      <div class="panel-header"><span class="panel-title">📤 Upload Applications (Excel)</span></div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Excel File (.xlsx)</label>
-          <input class="file-input" type="file" id="excelFile" accept=".xlsx,.xls"/>
-        </div>
-        <button class="btn btn-primary" id="excelBtn" onclick="doExcelUpload()">📤 Upload Excel</button>
-        <div id="excelMsg" class="msg" style="margin-top:10px;"></div>
-        <div class="output-box" id="excelOut" style="margin-top:10px;"></div>
-      </div>
-    </div>
+  </div><!-- /uploads -->
+
+  <!-- ── SETTINGS SECTION ───────────────────────────────── -->
+  <div class="page-body admin-section" id="settings">
 
     <div class="panel" style="max-width:720px;">
       <div class="panel-header"><span class="panel-title">💾 Backup</span></div>
@@ -411,7 +500,8 @@
         <div id="backupMsg" class="msg" style="margin-top:6px;"></div>
       </div>
     </div>
-  </div>
+
+  </div><!-- /settings -->
 
 </div><!-- /main-content -->
 </div><!-- /admin-layout -->
@@ -474,6 +564,7 @@ const AD = {
   currentSection: 'dashboard',
   appFilter: 'all', appPage: 1, appSearch: '',
   logPage: 1, logSearch: '',
+  objPage: 1, objDebounce: null,
   appDebounce: null, logDebounce: null,
   currentAppId: null
 };
@@ -527,7 +618,7 @@ function closeSidebar() {
 }
 
 /* ── Section switcher ────────────────────────────────────── */
-const ALL_SECTIONS = ['dashboard','applications','alerts','staff','logs','settings'];
+const ALL_SECTIONS = ['dashboard','applications','alerts','staff','logs','objections','uploads','settings'];
 function showSection(id) {
   ALL_SECTIONS.forEach(s => {
     document.getElementById(s).classList.toggle('active', s === id);
@@ -541,6 +632,7 @@ function showSection(id) {
   if (id === 'alerts')       loadAlerts();
   if (id === 'staff')        loadStaff();
   if (id === 'logs')         loadLogs();
+  if (id === 'objections')   loadObjections();
 }
 
 function refreshCurrentSection() { showSection(AD.currentSection); }
@@ -1002,6 +1094,120 @@ async function doBackup() {
     const res = await AdminAPI.post('/api/admin/backup', { type });
     setFieldMsg('backupMsg','✅ ' + res.message,'success');
   } catch(e) { setFieldMsg('backupMsg','❌ '+e.message,'error'); }
+}
+
+/* ════════════════════════════════════════════════════════
+   OBJECTIONS
+   ════════════════════════════════════════════════════════ */
+function debounceObj() {
+  clearTimeout(AD.objDebounce);
+  AD.objDebounce = setTimeout(() => { AD.objPage = 1; loadObjections(); }, 380);
+}
+function objGoPage(p) { AD.objPage = p; loadObjections(); }
+
+async function loadObjections() {
+  const tbody = document.getElementById('objTbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7"><div class="loading-overlay">⏳ Loading…</div></td></tr>';
+  try {
+    const search = encodeURIComponent((document.getElementById('objSearch')?.value || '').trim());
+    const status = document.getElementById('objStatusFilter')?.value || '';
+    const url = `/api/objection?search=${search}&status=${status}&page=${AD.objPage}&limit=30`;
+    const res = await AdminAPI.get(url);
+    const { objections = [], total = 0 } = res.data;
+
+    if (!objections.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>No objections found</p></div></td></tr>';
+      document.getElementById('objPager').innerHTML = '';
+      // Update sidebar badge
+      const nb = document.getElementById('nav-badge-obj');
+      if (nb) nb.style.display = 'none';
+      return;
+    }
+
+    tbody.innerHTML = objections.map(o => {
+      const overdue = o.deadline && !o.resolved && new Date(o.deadline) < new Date();
+      return `<tr>
+        <td><code style="font-size:11px;">${esc(o.application_no)}</code></td>
+        <td class="truncate">${esc(o.name)}</td>
+        <td><span class="badge badge-objection" style="font-size:11px;">${esc(o.type)}</span></td>
+        <td class="truncate" style="max-width:160px;" title="${esc(o.remark)}">${esc(o.remark||'—')}</td>
+        <td style="font-size:12px;${overdue?'color:var(--red);font-weight:700;':''}">${fmtDate(o.deadline)}</td>
+        <td>${o.resolved
+          ? '<span style="color:var(--green);font-size:12px;">✅ Resolved</span>'
+          : `<span style="color:var(--red);font-size:12px;">❌ Open</span>`}</td>
+        <td>${!o.resolved
+          ? `<button class="btn btn-success btn-xs" onclick="resolveObj(${o.id},this)">✅ Resolve</button>`
+          : ''}</td>
+      </tr>`;
+    }).join('');
+    renderPager('objPager', total, AD.objPage, 30, 'objGoPage');
+
+    // Badge: count unresolved
+    const unresolved = objections.filter(o => !o.resolved).length;
+    const nb = document.getElementById('nav-badge-obj');
+    if (nb) { nb.textContent = '!'; nb.style.display = unresolved > 0 ? 'inline' : 'none'; }
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="alert alert-error">❌ ${esc(e.message)}</div></td></tr>`;
+  }
+}
+
+async function doAddObjection() {
+  const application_no = document.getElementById('objAppNo').value.trim();
+  const type           = document.getElementById('objType').value;
+  const remark         = document.getElementById('objRemark').value.trim();
+  if (!application_no) { setFieldMsg('objAddMsg','Application No is required','error'); return; }
+  try {
+    setFieldMsg('objAddMsg','','');
+    const res = await AdminAPI.post('/api/objection', { application_no, type, remark });
+    const deadline = res.deadline || res.data?.deadline;
+    setFieldMsg('objAddMsg','✅ Objection added. Deadline: ' + fmtDate(deadline),'success');
+    document.getElementById('objAppNo').value  = '';
+    document.getElementById('objRemark').value = '';
+    loadObjections();
+  } catch(e) { setFieldMsg('objAddMsg','❌ '+e.message,'error'); }
+}
+
+async function resolveObj(id, btn) {
+  btn.disabled = true; btn.textContent = '⏳…';
+  try {
+    await AdminAPI.post('/api/objection/resolve', { objection_id: id });
+    gFlash('✅ Objection resolved','success');
+    loadObjections();
+  } catch(e) {
+    gFlash('❌ '+e.message,'error');
+    btn.disabled = false; btn.textContent = '✅ Resolve';
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   UPLOADS — Certificate
+   ════════════════════════════════════════════════════════ */
+async function doCertUpload() {
+  const appNo     = document.getElementById('certAppNo').value.trim();
+  const fileInput = document.getElementById('certFile');
+  const btn       = document.getElementById('certBtn');
+  const file      = fileInput.files[0];
+
+  if (!appNo) { setFieldMsg('certMsg','Application No is required','error'); return; }
+  if (!file)  { setFieldMsg('certMsg','Please select a certificate file','error'); return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Uploading…';
+  setFieldMsg('certMsg','','');
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('application_no', appNo);
+    // AdminAPI.postForm sends Authorization header only — no Content-Type (browser sets boundary)
+    const res = await AdminAPI.postForm('/api/certificate/upload', form);
+    setFieldMsg('certMsg','✅ '+res.message,'success');
+    fileInput.value = '';
+    document.getElementById('certAppNo').value = '';
+  } catch(e) {
+    setFieldMsg('certMsg','❌ '+e.message,'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📤 Upload Certificate';
+  }
 }
 
 /* ════════════════════════════════════════════════════════

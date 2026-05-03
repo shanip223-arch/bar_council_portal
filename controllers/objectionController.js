@@ -47,4 +47,42 @@ async function resolveObjection(req, res) {
   }
 }
 
-module.exports = { addObjection, listObjections, resolveObjection };
+async function listAllObjections(req, res) {
+  const { search = '', status = '', page = 1, limit = 30 } = req.query;
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  try {
+    const vals = [];
+    const where = [];
+    let i = 1;
+    if (search) {
+      where.push(`(a.application_no ILIKE $${i} OR a.name ILIKE $${i})`);
+      vals.push('%' + search + '%');
+      i++;
+    }
+    if (status === 'resolved')   where.push('o.resolved = true');
+    if (status === 'unresolved') where.push('(o.resolved = false OR o.resolved IS NULL)');
+    const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const countRes = await pool.query(
+      `SELECT COUNT(*) FROM objections o JOIN applications a ON a.id=o.application_id ${whereStr}`,
+      vals
+    );
+    const rows = await pool.query(
+      `SELECT o.id, o.type, o.remark, o.deadline, o.resolved, o.created_at,
+              a.application_no, a.name, a.mobile
+       FROM objections o
+       JOIN applications a ON a.id=o.application_id
+       ${whereStr}
+       ORDER BY o.id DESC
+       LIMIT $${i} OFFSET $${i + 1}`,
+      [...vals, parseInt(limit), offset]
+    );
+    res.json({
+      success: true, message: 'OK',
+      data: { objections: rows.rows, total: parseInt(countRes.rows[0].count), page: parseInt(page), limit: parseInt(limit) }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message, data: null });
+  }
+}
+
+module.exports = { addObjection, listObjections, resolveObjection, listAllObjections };
