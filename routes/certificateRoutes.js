@@ -7,7 +7,7 @@ const { uploadCertificate, requestDownloadOtp, downloadCertificate, payForDownlo
 const upload = multer({ dest: 'uploads/temp' });
 const router = express.Router();
 
-router.post('/upload', auth, role('admin'), upload.single('file'), uploadCertificate);
+router.post('/upload', auth, role('admin','staff'), upload.single('file'), uploadCertificate);
 router.post('/request-download-otp', requestDownloadOtp);
 router.post('/download', downloadCertificate);
 router.post('/pay', payForDownload);

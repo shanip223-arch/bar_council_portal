@@ -69,9 +69,9 @@ router.get('/alerts',             auth, role('admin', 'staff'), getAlerts);
 
 router.post('/upload-excel',      auth, role('admin'), handleUpload, uploadExcelApplications);
 router.post('/excel-upload',      auth, role('admin'), handleUpload, uploadExcelApplications);
-router.post('/excel-preview',      auth, role('admin'), handleUpload, previewExcel);
-router.post('/excel-import',       auth, role('admin'), importExcel);
-router.post('/excel-auto-import',  auth, role('admin'), handleUpload, autoImportExcel);
+router.post('/excel-preview',      auth, role('admin','staff'), handleUpload, previewExcel);
+router.post('/excel-import',       auth, role('admin','staff'), importExcel);
+router.post('/excel-auto-import',  auth, role('admin','staff'), handleUpload, autoImportExcel);
 router.post('/override-upload',   auth, role('admin'), overrideUpload);
 router.post('/backup',            auth, role('admin'), runManualBackup);
 router.post('/restore',           auth, role('admin'), restoreManualBackup);

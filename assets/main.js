@@ -67,11 +67,19 @@ function showFlash(id, text, type) {
   /* /admin login page — redirect away if already authenticated */
   if (path === '/admin') {
     if (adminToken) { window.location.href = '/admin-dashboard'; return; }
-    if (staffToken) { window.location.href = '/admin-dashboard'; return; }
+    if (staffToken) { window.location.href = '/staff-dashboard'; return; }
   }
 
-  /* Admin dashboard — accessible by adminToken OR staffToken */
+  /* Admin dashboard — admin only; staff redirected to their dashboard */
   if (path === '/admin-dashboard') {
+    if (!adminToken) {
+      if (staffToken) { window.location.href = '/staff-dashboard'; return; }
+      window.location.href = '/admin'; return;
+    }
+  }
+
+  /* Staff dashboard — staff or admin; public redirected to login */
+  if (path === '/staff-dashboard') {
     if (!adminToken && !staffToken) { window.location.href = '/admin'; return; }
   }
 
@@ -218,7 +226,7 @@ async function staffLogin() {
       setStaffToken(token); setStoredRole(role);
     }
     setMsg('staffLoginMsg', '✅ Login successful. Redirecting…', 'success');
-    setTimeout(() => { window.location.href = '/admin-dashboard'; }, 600);
+    setTimeout(() => { window.location.href = role === 'admin' ? '/admin-dashboard' : '/staff-dashboard'; }, 600);
   } catch(e) {
     setMsg('staffLoginMsg', '❌ ' + e.message, 'error');
   } finally {

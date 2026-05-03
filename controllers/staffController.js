@@ -188,4 +188,55 @@ async function updateUpload(req, res) {
   } catch (e) { res.status(500).json({ success: false, message: e.message, data: null }); }
 }
 
-module.exports = { getStaffDashboard, getStaffObjections, updateObjection, getStaffUploads, updateUpload };
+/* ─── DUPLICATE REQUESTS LIST ─────────────────────────────────────────── */
+async function getStaffDuplicates(req, res) {
+  try {
+    const { filter = 'all', page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    let where = [], params = [], idx = 1;
+    if (filter === 'pending')  where.push("dr.status='pending'");
+    if (filter === 'approved') where.push("dr.status='approved'");
+    if (filter === 'rejected') where.push("dr.status='rejected'");
+    const wc = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const countRes = await pool.query(`SELECT COUNT(*) FROM duplicate_requests dr ${wc}`, params);
+    const rows = await pool.query(
+      `SELECT dr.id, dr.application_no, dr.reason, dr.status, dr.issue_code, dr.created_at,
+              a.name, a.mobile, a.district
+       FROM duplicate_requests dr
+       LEFT JOIN applications a ON a.application_no = dr.application_no
+       ${wc}
+       ORDER BY dr.created_at DESC
+       LIMIT $${idx} OFFSET $${idx+1}`,
+      [...params, parseInt(limit), offset]
+    );
+    res.json({ success: true, data: {
+      duplicates: rows.rows,
+      total: parseInt(countRes.rows[0].count),
+      page: parseInt(page)
+    }});
+  } catch(e) { res.status(500).json({ success: false, message: e.message, data: null }); }
+}
+
+/* ─── MANAGE DUPLICATE ───────────────────────────────────────────────── */
+async function manageDuplicate(req, res) {
+  try {
+    const { id } = req.params;
+    const { action, issue_code } = req.body;
+    if (!['approved', 'rejected'].includes(action))
+      return res.status(400).json({ success: false, message: 'Invalid action (approved | rejected)', data: null });
+    if (action === 'approved' && !['D1', 'D2'].includes(issue_code))
+      return res.status(400).json({ success: false, message: 'issue_code must be D1 or D2', data: null });
+
+    await pool.query(
+      'UPDATE duplicate_requests SET status=$1, issue_code=$2 WHERE id=$3',
+      [action, action === 'approved' ? issue_code : null, id]
+    );
+    await logAction(req.user.username, req.user.role, `duplicate_${action}`, `id=${id}`);
+    res.json({ success: true, message: `Duplicate request ${action}`, data: null });
+  } catch(e) { res.status(500).json({ success: false, message: e.message, data: null }); }
+}
+
+module.exports = {
+  getStaffDashboard, getStaffObjections, updateObjection, getStaffUploads, updateUpload,
+  getStaffDuplicates, manageDuplicate
+};

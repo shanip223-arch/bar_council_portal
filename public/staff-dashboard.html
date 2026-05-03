@@ -1,211 +1,872 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Staff Dashboard – UP Bar Council</title>
-  <link rel="stylesheet" href="/assets/admin.css"/>
-  <style>
-    .activity-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px; }
-    .dot-blue{background:#3b82f6;} .dot-green{background:#16a34a;} .dot-red{background:#dc2626;} .dot-gray{background:#94a3b8;}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Staff Dashboard – UP Bar Council</title>
+<link rel="stylesheet" href="/assets/admin.css"/>
+<style>
+.staff-section { display:none; }
+.staff-section.active { display:block; }
+.page-body { flex:1; padding:20px; overflow-y:auto; }
+.dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px; }
+.dot-blue{background:#3b82f6;} .dot-green{background:#16a34a;}
+.dot-red{background:#dc2626;} .dot-amber{background:#d97706;} .dot-gray{background:#94a3b8;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;}
+.sidebar-overlay.open{display:block;}
+.teal-header { background:linear-gradient(135deg,#0d5f6e,#0e8c9e); }
+@media(max-width:768px){
+  .stat-grid{grid-template-columns:1fr 1fr !important;}
+  .two-col{grid-template-columns:1fr !important;}
+}
+@media(max-width:480px){
+  .stat-grid{grid-template-columns:1fr !important;}
+}
+</style>
 </head>
 <body>
+<div class="sidebar-overlay" id="sideOverlay" onclick="document.getElementById('sidebar').classList.remove('open');document.getElementById('sideOverlay').classList.remove('open');"></div>
+
 <div class="admin-layout">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="logo">⚖️</div>
-      <div class="brand-text">
-        <div class="name">UP Bar Council</div>
-        <div class="sub">Staff Portal</div>
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">⚖️</div>
+    <div class="brand-text">
+      <div class="name">UP Bar Council</div>
+      <div class="sub">Staff Portal</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Workspace</div>
+  <nav>
+    <a class="nav-link active" id="snav-overview"      data-sec="overview"      href="#">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a class="nav-link" id="snav-upload-excel"         data-sec="upload-excel"  href="#">
+      <span class="nav-icon">📥</span> Upload Applications
+    </a>
+    <a class="nav-link" id="snav-upload-cert"          data-sec="upload-cert"   href="#">
+      <span class="nav-icon">📄</span> Upload Certificate
+    </a>
+    <a class="nav-link" id="snav-duplicates"           data-sec="duplicates"    href="#">
+      <span class="nav-icon">🔁</span> Duplicate Requests
+      <span class="nav-badge" id="nav-dup-badge" style="display:none;"></span>
+    </a>
+    <a class="nav-link" id="snav-objections"           data-sec="objections"    href="#">
+      <span class="nav-icon">⚠️</span> Objections
+      <span class="nav-badge" id="nav-obj-badge" style="display:none;"></span>
+    </a>
+  </nav>
+
+  <div style="flex:1;"></div>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="avatar" id="sideAvatar">S</div>
+      <div>
+        <div id="sideName" style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div>
+        <div style="font-size:10px;color:#64748b;">Staff Member</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="logoutStaff()">
+      🚪 Logout
+    </button>
+  </div>
+</aside>
+
+<!-- ════ MAIN CONTENT ════ -->
+<div class="main-content">
+  <header class="top-header">
+    <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sideOverlay').classList.toggle('open');">☰</button>
+    <span class="page-title" id="pageTitle">📊 Staff Dashboard</span>
+    <span class="page-subtitle">| UP Bar Council</span>
+    <div class="header-spacer"></div>
+    <span id="hdrDate" style="font-size:12px;color:#64748b;margin-right:8px;"></span>
+    <button class="header-btn" onclick="reloadSection()" title="Refresh">🔄</button>
+    <button class="header-btn danger" onclick="logoutStaff()">🚪 Logout</button>
+  </header>
+
+  <!-- ════════ OVERVIEW SECTION ════════ -->
+  <div class="page-body staff-section active" id="sec-overview">
+    <div id="flashMsg" class="flash" style="display:none;margin-bottom:14px;"></div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card">
+        <div class="stat-info"><div class="label">Pending Objections</div><div class="value" id="ov-pobj">—</div><div class="sub">Awaiting resolution</div></div>
+        <div class="stat-icon ic-yellow">📋</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><div class="label">Overdue Objections</div><div class="value" id="ov-oobj" style="color:var(--red);">—</div><div class="sub">Deadline passed</div></div>
+        <div class="stat-icon ic-red">⚠️</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><div class="label">Docs to Review</div><div class="value" id="ov-pupl">—</div><div class="sub">Pending verification</div></div>
+        <div class="stat-icon ic-blue">📁</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><div class="label">Completed Today</div><div class="value" id="ov-today">—</div><div class="sub">Your actions</div></div>
+        <div class="stat-icon ic-green">✅</div>
       </div>
     </div>
 
-    <div class="sidebar-section-label">Navigation</div>
-    <nav>
-      <button class="nav-link active" onclick="location.href='/staff-dashboard'">
-        <span class="nav-icon">🏠</span> Dashboard
-      </button>
-      <button class="nav-link" onclick="location.href='/staff-objections'">
-        <span class="nav-icon">📋</span> Objections
-        <span class="nav-badge" id="sb-obj-count">…</span>
-      </button>
-      <button class="nav-link" onclick="location.href='/staff-uploads'">
-        <span class="nav-icon">📁</span> Upload Review
-        <span class="nav-badge" id="sb-upl-count">…</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-section-label" style="margin-top:auto;">Account</div>
-    <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="avatar" id="avatarLetter">S</div>
-        <div>
-          <div id="staffName" style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div>
-          <div style="font-size:10px;color:#64748b;">Staff Member</div>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="logoutStaff()">
-        🚪 Logout
-      </button>
+    <div class="mini-stats" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px;">
+      <div class="mini-stat"><div class="m-val" id="ov-approved">—</div><div class="m-label">Uploads Approved</div></div>
+      <div class="mini-stat"><div class="m-val" id="ov-rejected">—</div><div class="m-label">Uploads Rejected</div></div>
+      <div class="mini-stat"><div class="m-val" id="ov-pending-u">—</div><div class="m-label">Uploads Pending</div></div>
     </div>
-  </aside>
 
-  <!-- MAIN -->
-  <div class="main-content">
-    <header class="top-header">
-      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-      <span class="page-title">Staff Dashboard</span>
-      <span class="page-subtitle">| अवलोकन</span>
-      <div class="header-spacer"></div>
-      <span id="hdr-date" style="font-size:12px;color:#64748b;"></span>
-    </header>
-
-    <div class="page-body">
-      <div id="flash" class="flash" style="display:none;margin-bottom:14px;"></div>
-
-      <!-- STAT CARDS -->
-      <div class="stat-grid" id="statGrid">
-        <div class="stat-card"><div class="stat-info"><div class="label">Pending Objections</div><div class="value" id="s-pobj">…</div><div class="sub">Awaiting resolution</div></div><div class="stat-icon ic-yellow">📋</div></div>
-        <div class="stat-card"><div class="stat-info"><div class="label">Overdue Objections</div><div class="value" id="s-oobj" style="color:#dc2626;">…</div><div class="sub">Deadline passed</div></div><div class="stat-icon ic-red">⚠️</div></div>
-        <div class="stat-card"><div class="stat-info"><div class="label">Documents to Review</div><div class="value" id="s-pupl">…</div><div class="sub">Pending verification</div></div><div class="stat-icon ic-blue">📁</div></div>
-        <div class="stat-card"><div class="stat-info"><div class="label">Completed Today</div><div class="value" id="s-today">…</div><div class="sub">Your actions today</div></div><div class="stat-icon ic-green">✅</div></div>
-      </div>
-
-      <!-- MINI STATS -->
-      <div class="mini-stats" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px;">
-        <div class="mini-stat"><div class="m-val" id="m-approved">…</div><div class="m-label">Uploads Approved</div></div>
-        <div class="mini-stat"><div class="m-val" id="m-rejected">…</div><div class="m-label">Uploads Rejected</div></div>
-        <div class="mini-stat"><div class="m-val" id="m-pending-u">…</div><div class="m-label">Uploads Pending</div></div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-
-        <!-- RECENT OBJECTIONS -->
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">📋 Recent Objections</span>
-            <a href="/staff-objections" class="btn btn-outline btn-sm">View All →</a>
-          </div>
-          <div class="panel-body" id="recentObjList">
-            <div class="loading-overlay">⏳</div>
-          </div>
-        </div>
-
-        <!-- RECENT UPLOADS -->
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">📁 Recent Uploads</span>
-            <a href="/staff-uploads" class="btn btn-outline btn-sm">View All →</a>
-          </div>
-          <div class="panel-body" id="recentUplList">
-            <div class="loading-overlay">⏳</div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ACTIVITY LOG -->
-      <div class="panel" style="margin-top:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;" class="two-col">
+      <div class="panel">
         <div class="panel-header">
-          <span class="panel-title">🕒 My Recent Activity</span>
+          <span class="panel-title">📋 Recent Objections</span>
+          <button class="btn btn-outline btn-sm" onclick="showSection('objections')">View All →</button>
         </div>
-        <div class="panel-body" id="activityList">
-          <div class="loading-overlay">⏳</div>
+        <div class="panel-body" id="ov-recentObj"><div class="loading-overlay">⏳</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📁 Recent Doc Reviews</span>
+          <button class="btn btn-outline btn-sm" onclick="showSection('upload-cert')">Upload Cert →</button>
+        </div>
+        <div class="panel-body" id="ov-recentUpl"><div class="loading-overlay">⏳</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🕒 My Recent Activity</span></div>
+      <div class="panel-body" id="ov-activity"><div class="loading-overlay">⏳</div></div>
+    </div>
+  </div>
+
+  <!-- ════════ UPLOAD EXCEL SECTION ════════ -->
+  <div class="page-body staff-section" id="sec-upload-excel">
+    <div class="panel" style="max-width:980px;margin-bottom:16px;">
+      <div class="panel-header">
+        <span class="panel-title">📥 Upload Applications (Excel)</span>
+        <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">Upload → Preview Columns → Map Fields → Import</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- Step 1: File pick -->
+        <div id="sxl-area">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12.5px;line-height:1.8;">
+            <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">📋 Any column names are accepted — system auto-suggests mapping, you can override</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:3px 24px;color:#374151;">
+              <div><span style="color:#64748b;">Application No:</span> <code>Application No · App No · Enrollment No · Reg No</code></div>
+              <div><span style="color:#64748b;">Name:</span> <code>Name · Candidate Name · Full Name · Student Name</code></div>
+              <div><span style="color:#64748b;">Father Name:</span> <code>Father Name · Father's Name · Guardian Name · F Name</code></div>
+              <div><span style="color:#64748b;">Mobile:</span> <code>Mobile · Mobile No · Phone · Contact No · Mob</code></div>
+              <div><span style="color:#64748b;">District:</span> <code>District · Dist · Zila · Zilla</code></div>
+              <div><span style="color:#64748b;">DOB (optional):</span> <code>DOB · Date of Birth · Birth Date</code></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Excel File (.xlsx / .xls) — max 20 MB</label>
+            <input class="file-input" type="file" id="sxlFile" accept=".xlsx,.xls"/>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="sxlPreviewBtn" onclick="sxlDoPreview()">🔍 Upload &amp; Preview Columns →</button>
+            <div id="sxlMsg" class="msg" style="margin-bottom:0;"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: Mapping + preview -->
+        <div id="sxl-step2" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:13px;">
+              <strong id="sxl-fname" style="color:var(--navy2);">file.xlsx</strong>
+              &nbsp;|&nbsp;<span id="sxl-rowcount" style="color:var(--green);font-weight:700;">0 rows</span>
+              &nbsp;|&nbsp;<span id="sxl-sheetname" style="color:var(--muted);font-size:12px;"></span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="sxlReset()">← Start Over</button>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">📌 Column Mapping</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">
+              Auto-detection is shown as a suggestion — <strong>you can override any dropdown</strong>.
+              Required: <strong>application_no · name · father_name · mobile · district</strong>. Optional: <strong>dob</strong>. Set <em>Ignore</em> for columns you don't need.
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Excel Column</th><th>Auto-Detected As</th><th style="min-width:210px;">Map To (editable ↓)</th><th>Sample Value</th></tr></thead>
+                <tbody id="sxlMappingBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:5px;">👁️ Data Preview — First 5 Rows</div>
+            <div class="table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:max-content;">
+                <thead id="sxlPreviewHead"></thead>
+                <tbody id="sxlPreviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="sxlImportBtn" onclick="sxlDoImport()">✅ Import Selected Fields</button>
+            <button class="btn btn-outline" onclick="sxlReset()">← Start Over</button>
+            <div id="sxlImportMsg" class="msg" style="margin-bottom:0;"></div>
+          </div>
+        </div>
+
+        <!-- Step 3: Results -->
+        <div id="sxl-result" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ UPLOAD CERTIFICATE SECTION ════════ -->
+  <div class="page-body staff-section" id="sec-upload-cert">
+    <div class="panel" style="max-width:720px;margin-bottom:16px;">
+      <div class="panel-header"><span class="panel-title">📄 Upload Certificate (PDF / Image)</span></div>
+      <div class="panel-body">
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12.5px;color:#166534;">
+          Uploading a certificate will set the application status to <strong>Approved</strong> and make the certificate available to the candidate for download.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Application No <span class="required">*</span></label>
+          <input class="form-input" id="certAppNo" placeholder="UP12345/25" style="max-width:260px;"/>
+          <div class="form-hint">Format: UP followed by 5 digits / 2-digit year — e.g. UP00001/25</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certificate File (PDF / JPG / PNG) — max 10 MB</label>
+          <input class="file-input" type="file" id="certFile" accept=".pdf,.jpg,.jpeg,.png,.webp"/>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="certUploadBtn" onclick="doCertUpload()">📤 Upload Certificate</button>
+          <div id="certMsg" class="msg" style="margin-bottom:0;"></div>
         </div>
       </div>
+    </div>
 
-    </div><!-- page-body -->
-  </div><!-- main-content -->
-</div>
+    <!-- Recent certificate uploads log -->
+    <div class="panel" style="max-width:720px;">
+      <div class="panel-header">
+        <span class="panel-title">📋 Recent Certificate Uploads</span>
+        <button class="btn btn-outline btn-sm" onclick="loadRecentCerts()">🔄 Refresh</button>
+      </div>
+      <div class="panel-body" id="recentCertList"><div class="loading-overlay">⏳</div></div>
+    </div>
+  </div>
+
+  <!-- ════════ DUPLICATE REQUESTS SECTION ════════ -->
+  <div class="page-body staff-section" id="sec-duplicates">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🔁 Duplicate Requests</span>
+        <button class="btn btn-outline btn-sm" onclick="loadDuplicates()">🔄 Refresh</button>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn btn-sm" id="dup-f-all"      onclick="dupFilter('all')"      style="background:var(--navy2);color:#fff;">All</button>
+          <button class="btn btn-outline btn-sm" id="dup-f-pending"  onclick="dupFilter('pending')">Pending</button>
+          <button class="btn btn-outline btn-sm" id="dup-f-approved" onclick="dupFilter('approved')">Approved</button>
+          <button class="btn btn-outline btn-sm" id="dup-f-rejected" onclick="dupFilter('rejected')">Rejected</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>#</th><th>App No</th><th>Name</th><th>District</th><th>Reason</th><th>Requested</th><th>Status</th><th style="min-width:240px;">Actions</th></tr>
+            </thead>
+            <tbody id="dupBody">
+              <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="dupPagination" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ OBJECTIONS SECTION ════════ -->
+  <div class="page-body staff-section" id="sec-objections">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">⚠️ Objections</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input class="form-input" id="objSearch" placeholder="Search application / name…"
+            style="width:210px;padding:6px 10px;font-size:12px;"
+            onkeydown="if(event.key==='Enter')loadObjections()"/>
+          <button class="btn btn-outline btn-sm" onclick="loadObjections()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn btn-sm" id="obj-f-all"      onclick="objFilter('all')"      style="background:var(--navy2);color:#fff;">All</button>
+          <button class="btn btn-outline btn-sm" id="obj-f-pending"  onclick="objFilter('pending')">Pending</button>
+          <button class="btn btn-outline btn-sm" id="obj-f-overdue"  onclick="objFilter('overdue')">Overdue</button>
+          <button class="btn btn-outline btn-sm" id="obj-f-resolved" onclick="objFilter('resolved')">Resolved</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>App No</th><th>Name</th><th>District</th><th>Type</th><th>Deadline</th><th>Status</th><th>Staff Remark</th><th style="min-width:260px;">Actions</th></tr>
+            </thead>
+            <tbody id="objBody">
+              <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="objPagination" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+</div><!-- /admin-layout -->
 
 <script src="/assets/main.js"></script>
 <script>
-/* decode JWT without library */
+/* ═══════════════════════════════════════════════════════════
+   STAFF DASHBOARD — Main Script
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Auth guard ── */
+(function guard() {
+  const s = getStaffToken(), a = getAdminToken();
+  if (!s && !a) { window.location.href = '/admin'; }
+})();
+
+/* ── Utilities ── */
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sfMsg(id, txt, type) {
+  const el = document.getElementById(id); if (!el) return;
+  el.className = 'msg' + (type ? ' '+type : '');
+  el.textContent = txt;
+}
 function decodeJwt(t) {
   try { return JSON.parse(atob(t.split('.')[1])); } catch(e) { return {}; }
 }
 
-(async function init() {
+/* ── Section navigation ── */
+let currentSection = 'overview';
+const SECTION_TITLES = {
+  'overview':      '📊 Staff Dashboard',
+  'upload-excel':  '📥 Upload Applications',
+  'upload-cert':   '📄 Upload Certificate',
+  'duplicates':    '🔁 Duplicate Requests',
+  'objections':    '⚠️ Objections'
+};
+
+function showSection(name) {
+  document.querySelectorAll('.staff-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+  const sec = document.getElementById('sec-' + name);
+  const nav = document.getElementById('snav-' + name);
+  if (sec) sec.classList.add('active');
+  if (nav) nav.classList.add('active');
+  currentSection = name;
+  document.getElementById('pageTitle').textContent = SECTION_TITLES[name] || 'Staff Portal';
+  if (name === 'duplicates') loadDuplicates();
+  if (name === 'objections') loadObjections();
+  if (name === 'upload-cert') loadRecentCerts();
+}
+
+function reloadSection() {
+  if (currentSection === 'overview')     loadOverview();
+  else if (currentSection === 'duplicates') loadDuplicates();
+  else if (currentSection === 'objections') loadObjections();
+  else if (currentSection === 'upload-cert') loadRecentCerts();
+}
+
+document.querySelectorAll('[data-sec]').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    showSection(this.dataset.sec);
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sideOverlay').classList.remove('open');
+  });
+});
+
+/* ── Init ── */
+(function init() {
   const tok = getPrivToken();
   if (tok) {
     const p = decodeJwt(tok);
     const name = p.username || 'Staff';
-    document.getElementById('staffName').textContent = name;
-    document.getElementById('avatarLetter').textContent = name[0].toUpperCase();
+    document.getElementById('sideName').textContent   = name;
+    document.getElementById('sideAvatar').textContent = name[0].toUpperCase();
   }
-  document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('hdrDate').textContent =
+    new Date().toLocaleDateString('en-IN', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+  loadOverview();
+})();
 
+
+/* ═══════════════════════════════════════════════════
+   OVERVIEW
+   ═══════════════════════════════════════════════════ */
+async function loadOverview() {
   try {
     const res = await StaffAPI.get('/api/staff/dashboard');
     const { stats, recent_objections, recent_uploads, recent_logs } = res.data;
 
-    document.getElementById('s-pobj').textContent  = stats.pending_objections;
-    document.getElementById('s-oobj').textContent  = stats.overdue_objections;
-    document.getElementById('s-pupl').textContent  = stats.pending_uploads;
-    document.getElementById('s-today').textContent = stats.completed_today;
-    document.getElementById('m-approved').textContent = stats.approved_uploads;
-    document.getElementById('m-rejected').textContent = stats.rejected_uploads;
-    document.getElementById('m-pending-u').textContent = stats.pending_uploads;
+    document.getElementById('ov-pobj').textContent    = stats.pending_objections;
+    document.getElementById('ov-oobj').textContent    = stats.overdue_objections;
+    document.getElementById('ov-pupl').textContent    = stats.pending_uploads;
+    document.getElementById('ov-today').textContent   = stats.completed_today;
+    document.getElementById('ov-approved').textContent  = stats.approved_uploads;
+    document.getElementById('ov-rejected').textContent  = stats.rejected_uploads;
+    document.getElementById('ov-pending-u').textContent = stats.pending_uploads;
 
-    document.getElementById('sb-obj-count').textContent = stats.pending_objections;
-    document.getElementById('sb-upl-count').textContent = stats.pending_uploads;
+    /* Sidebar badges */
+    const objBadge = document.getElementById('nav-obj-badge');
+    if (stats.pending_objections > 0) { objBadge.textContent = stats.pending_objections; objBadge.style.display = ''; }
 
     /* Recent objections */
-    const oEl = document.getElementById('recentObjList');
-    if (!recent_objections.length) { oEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No objections yet</p></div>'; }
-    else {
+    const oEl = document.getElementById('ov-recentObj');
+    if (!recent_objections.length) {
+      oEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No objections yet</p></div>';
+    } else {
       oEl.innerHTML = recent_objections.map(o => `
-        <div class="recent-app">
-          <div class="activity-dot ${o.resolved ? 'dot-green' : isOverdue(o.deadline) ? 'dot-red' : 'dot-blue'}"></div>
+        <div class="recent-app" style="cursor:pointer;" onclick="showSection('objections')">
+          <div class="dot ${o.resolved ? 'dot-green' : isOverdue(o.deadline) ? 'dot-red' : 'dot-blue'}"></div>
           <div style="flex:1;">
-            <div class="recent-name">${escHtml(o.application_no)} — ${escHtml(o.name)}</div>
-            <div class="recent-no">${escHtml(o.type)} &nbsp;|&nbsp; Due: ${fmtDate(o.deadline)}</div>
+            <div class="recent-name">${esc(o.application_no)} — ${esc(o.name)}</div>
+            <div class="recent-no">${esc(o.type)} | Due: ${fmtDate(o.deadline)}</div>
           </div>
           <span class="badge ${o.resolved ? 'badge-approved' : isOverdue(o.deadline) ? 'badge-rejected' : 'badge-pending'}">${o.resolved ? 'Resolved' : isOverdue(o.deadline) ? 'Overdue' : 'Pending'}</span>
-        </div>
-      `).join('');
+        </div>`).join('');
     }
 
     /* Recent uploads */
-    const uEl = document.getElementById('recentUplList');
-    if (!recent_uploads.length) { uEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No uploads yet</p></div>'; }
-    else {
+    const uEl = document.getElementById('ov-recentUpl');
+    if (!recent_uploads.length) {
+      uEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No uploads reviewed yet</p></div>';
+    } else {
       uEl.innerHTML = recent_uploads.map(u => `
         <div class="recent-app">
-          <div class="activity-dot ${u.review_status==='approved'?'dot-green':u.review_status==='rejected'?'dot-red':'dot-blue'}"></div>
+          <div class="dot ${u.review_status==='approved'?'dot-green':u.review_status==='rejected'?'dot-red':'dot-blue'}"></div>
           <div style="flex:1;">
-            <div class="recent-name">${escHtml(u.application_no)} — ${escHtml(u.name)}</div>
-            <div class="recent-no">${escHtml(u.doc_type)} &nbsp;|&nbsp; ${fmtDate(u.uploaded_at)}</div>
+            <div class="recent-name">${esc(u.application_no)} — ${esc(u.name)}</div>
+            <div class="recent-no">${esc(u.doc_type)} | ${fmtDate(u.uploaded_at)}</div>
           </div>
           <span class="badge badge-${u.review_status}">${u.review_status}</span>
-        </div>
-      `).join('');
+        </div>`).join('');
     }
 
     /* Activity log */
-    const aEl = document.getElementById('activityList');
-    if (!recent_logs.length) { aEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🕒</div><p>No activity recorded yet</p></div>'; }
-    else {
+    const aEl = document.getElementById('ov-activity');
+    if (!recent_logs.length) {
+      aEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🕒</div><p>No activity recorded yet</p></div>';
+    } else {
       aEl.innerHTML = recent_logs.map(l => `
         <div class="log-item">
-          <div class="activity-dot dot-blue"></div>
-          <div class="log-action" style="flex:1;">${escHtml(l.action)}${l.details ? ' — <span class="log-detail">'+escHtml(l.details)+'</span>' : ''}</div>
+          <div class="dot dot-blue"></div>
+          <div class="log-action" style="flex:1;">${esc(l.action)}${l.details ? ' — <span class="log-detail">'+esc(l.details)+'</span>' : ''}</div>
           <div class="log-time">${fmtDateTime(l.created_at)}</div>
-        </div>
-      `).join('');
+        </div>`).join('');
+    }
+  } catch(e) {
+    showFlash('flashMsg', '❌ Failed to load dashboard: ' + e.message, 'error');
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   EXCEL IMPORT — 3-Step: Upload → Map → Import
+   ═══════════════════════════════════════════════════ */
+let sxlState = { filePath:null, columns:[], preview:[], totalRows:0, suggestedFields:{} };
+
+const SXL_FIELDS = [
+  { value:'',               label:'— Ignore this column —' },
+  { value:'application_no', label:'application_no  (Required)' },
+  { value:'name',           label:'name  (Required)' },
+  { value:'father_name',    label:'father_name  (Required)' },
+  { value:'mobile',         label:'mobile  (Required)' },
+  { value:'district',       label:'district  (Required)' },
+  { value:'dob',            label:'dob  (Optional)' },
+];
+
+function sxlNameDetect(col) {
+  const n = col.toLowerCase().replace(/[\s\-_\.]+/g, ' ').trim();
+  if (n.includes('application')||n.includes('app no')||n.includes('enroll')||n.includes('reg no')||n.includes('roll')) return 'application_no';
+  if (n==='name'||n.includes('candidate')||n.includes('full name')||n.includes('student')) return 'name';
+  if (n.includes('father')||n.includes('f name')||n.includes('guardian')||n.includes('parent')) return 'father_name';
+  if (n.includes('mobile')||n.includes('phone')||n.includes('contact')||n.includes('mob')) return 'mobile';
+  if (n.includes('district')||n.includes('dist')||n.includes('zila')) return 'district';
+  if (n.includes('dob')||n.includes('birth')) return 'dob';
+  return '';
+}
+
+function sxlReset() {
+  sxlState = { filePath:null, columns:[], preview:[], totalRows:0, suggestedFields:{} };
+  const fi = document.getElementById('sxlFile'); if (fi) fi.value = '';
+  document.getElementById('sxl-area').style.display    = '';
+  document.getElementById('sxl-step2').style.display   = 'none';
+  document.getElementById('sxl-result').style.display  = 'none';
+  document.getElementById('sxl-result').innerHTML      = '';
+  sfMsg('sxlMsg','',''); sfMsg('sxlImportMsg','','');
+}
+
+function buildSxlMappingTable(columns, preview, sf) {
+  sf = sf || {};
+  document.getElementById('sxlMappingBody').innerHTML = columns.map((col, i) => {
+    const sample   = preview[0] ? esc(String(preview[0][col] ?? '')) : '—';
+    const patHit   = sf[col];
+    const nameHit  = sxlNameDetect(col);
+    const auto     = patHit || nameHit;
+    let badge = '<span style="color:var(--muted);font-size:12px;">—</span>', rowStyle = '';
+    if (patHit)      { badge = `<span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;">✓ ${patHit}</span>`; rowStyle = 'background:#f0fdf4;'; }
+    else if (nameHit){ badge = `<span style="font-size:11px;font-weight:700;background:#d97706;color:#fff;padding:2px 8px;border-radius:4px;">~ ${nameHit}</span>`; rowStyle = 'background:#fffbeb;'; }
+    const opts = SXL_FIELDS.map(f =>
+      `<option value="${f.value}"${f.value===auto?' selected':''}>${f.label}</option>`
+    ).join('');
+    return `<tr style="${rowStyle}">
+      <td style="font-weight:600;color:var(--navy2);">${esc(col)}</td>
+      <td>${badge}</td>
+      <td><select class="form-select" id="sxlmap_${i}" style="min-width:195px;" onchange="onSxlMapChange(${i})">${opts}</select></td>
+      <td style="font-size:12px;font-family:monospace;color:var(--muted);">${sample}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildSxlPreviewTable(columns, preview) {
+  document.getElementById('sxlPreviewHead').innerHTML =
+    '<tr>' + columns.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  document.getElementById('sxlPreviewBody').innerHTML = preview.map(row =>
+    '<tr>' + columns.map(c =>
+      `<td style="font-size:12px;white-space:nowrap;">${esc(String(row[c] ?? ''))}</td>`
+    ).join('') + '</tr>'
+  ).join('');
+}
+
+function onSxlMapChange(idx) {
+  const sel = document.getElementById('sxlmap_' + idx);
+  if (!sel || sel.value !== 'application_no') return;
+  const col = sxlState.columns[idx];
+  const APP_RE = /^UP\d{5}\/\d{2}$/;
+  const sams = sxlState.preview.map(r => String(r[col]??'').trim().toUpperCase().replace(/\s+/g,'')).filter(v=>v!=='');
+  const hits = sams.filter(v => APP_RE.test(v)).length;
+  if (sams.length && !hits)
+    sfMsg('sxlImportMsg', `⚠️ Column "${col}" has no valid UP#####/YY values. Samples: ${sams.slice(0,3).map(v=>`"${v}"`).join(', ')}`, 'error');
+  else if (hits)
+    sfMsg('sxlImportMsg', `✅ "${col}" looks correct — ${hits}/${sams.length} preview rows match.`, 'success');
+}
+
+async function sxlDoPreview() {
+  const fi  = document.getElementById('sxlFile');
+  const file = fi?.files[0];
+  const btn  = document.getElementById('sxlPreviewBtn');
+  if (!file) { sfMsg('sxlMsg','❌ Please select an .xlsx or .xls file first','error'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Reading file…';
+  sfMsg('sxlMsg','','');
+  try {
+    const form = new FormData(); form.append('file', file);
+    const res = await AdminAPI.postForm('/api/admin/excel-preview', form);
+    const { columns, preview, totalRows, filePath, suggestedFields, sheetName } = res.data;
+    sxlState = { filePath, columns, preview, totalRows, suggestedFields: suggestedFields||{} };
+    document.getElementById('sxl-fname').textContent     = file.name;
+    document.getElementById('sxl-rowcount').textContent  = totalRows + ' data rows';
+    document.getElementById('sxl-sheetname').textContent = 'Sheet: ' + (sheetName||'—');
+    buildSxlMappingTable(columns, preview, suggestedFields);
+    buildSxlPreviewTable(columns, preview);
+    document.getElementById('sxl-area').style.display  = 'none';
+    document.getElementById('sxl-step2').style.display = '';
+  } catch(e) { sfMsg('sxlMsg','❌ '+e.message,'error'); }
+  finally { btn.disabled = false; btn.textContent = '🔍 Upload & Preview Columns →'; }
+}
+
+function sxlDownloadErrors(errors) {
+  const h = 'Row,Field,Raw Value,Cleaned Value,Error\n';
+  const b = errors.map(e =>
+    [e.row, e.field,
+     '"'+String(e.raw||e.value||'').replace(/"/g,'""')+'"',
+     '"'+String(e.cleaned||'').replace(/"/g,'""')+'"',
+     '"'+String(e.error||'').replace(/"/g,'""')+'"'
+    ].join(',')
+  ).join('\n');
+  const blob = new Blob([h+b], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='import_errors.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function sxlDoImport() {
+  const btn = document.getElementById('sxlImportBtn');
+  const mapping = {};
+  sxlState.columns.forEach((col,i)=>{ const v=document.getElementById('sxlmap_'+i)?.value; if(v) mapping[v]=col; });
+  const REQUIRED = ['application_no','name','father_name','mobile','district'];
+  const missing  = REQUIRED.filter(f=>!mapping[f]);
+  if (missing.length) { sfMsg('sxlImportMsg','❌ Please map required fields: '+missing.join(', '),'error'); return; }
+
+  const appCol = mapping.application_no;
+  if (appCol && sxlState.preview.length) {
+    const APP_RE = /^UP\d{5}\/\d{2}$/;
+    const sams   = sxlState.preview.map(r=>String(r[appCol]??'').trim().toUpperCase().replace(/\s+/g,'')).filter(v=>v!=='');
+    const hits   = sams.filter(v=>APP_RE.test(v)).length;
+    if (sams.length && !hits) {
+      if (!confirm(`Column "${appCol}" has no valid application numbers.\nSamples: ${sams.slice(0,3).join(', ')}\nExpected: UP12345/25\n\nProceed anyway?`)) return;
+    }
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ Importing…';
+  sfMsg('sxlImportMsg','','');
+  try {
+    const res = await AdminAPI.post('/api/admin/excel-import', { filePath: sxlState.filePath, mapping });
+    const { inserted=0, skipped=0, errors=[] } = res.data || {};
+    const total = sxlState.totalRows;
+    const FL = {application_no:'Application No',name:'Name',father_name:'Father Name',mobile:'Mobile',district:'District',dob:'DOB'};
+    const chips = Object.entries(mapping).map(([f,c]) =>
+      `<span style="display:inline-block;margin:2px 4px;padding:2px 9px;background:#dbeafe;border-radius:4px;font-size:11.5px;font-weight:600;color:#1d4ed8;">${FL[f]||f} ← <em>${esc(c)}</em></span>`
+    ).join('');
+
+    document.getElementById('sxl-result').innerHTML = `
+      <div style="margin-bottom:16px;font-size:12.5px;"><span style="font-weight:700;color:var(--navy2);">Fields imported:</span> ${chips}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--navy2);">${total}</div><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:4px;">📋 Total</div></div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:28px;font-weight:800;color:#16a34a;">${inserted}</div><div style="font-size:11px;font-weight:700;color:#166534;margin-top:4px;">✅ Inserted</div></div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:28px;font-weight:800;color:#d97706;">${skipped}</div><div style="font-size:11px;font-weight:700;color:#92400e;margin-top:4px;">⏭️ Skipped</div></div>
+        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:28px;font-weight:800;color:#dc2626;">${errors.length}</div><div style="font-size:11px;font-weight:700;color:#991b1b;margin-top:4px;">❌ Errors</div></div>
+      </div>
+      ${errors.length ? `
+        <div style="margin-bottom:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:700;color:#dc2626;">⚠️ Errors (${errors.length} rows skipped)</div>
+            <button class="btn btn-outline btn-sm" onclick="sxlDownloadErrors(window._sxlErrors)">⬇️ Download Error CSV</button>
+          </div>
+          <div class="table-wrap"><table class="data-table">
+            <thead><tr><th>Row</th><th>Field</th><th>Value</th><th>Reason</th></tr></thead>
+            <tbody>${errors.map(e=>`<tr>
+              <td style="font-weight:600;">${e.row}</td>
+              <td style="color:var(--navy2);font-weight:600;">${esc(e.field||'—')}</td>
+              <td style="font-family:monospace;font-size:11px;">${esc(e.value||e.raw||'—')}</td>
+              <td style="color:var(--red);font-size:12px;">${esc(e.error)}</td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+        </div>` : `
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#166534;font-weight:600;">
+          🎉 All valid rows inserted — no errors!
+        </div>`}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="sxlReset()">📤 Import Another File</button>
+      </div>`;
+
+    window._sxlErrors = errors;
+    document.getElementById('sxl-step2').style.display  = 'none';
+    document.getElementById('sxl-result').style.display = '';
+  } catch(e) { sfMsg('sxlImportMsg','❌ '+e.message,'error'); }
+  finally { btn.disabled = false; btn.textContent = '✅ Import Selected Fields'; }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   CERTIFICATE UPLOAD
+   ═══════════════════════════════════════════════════ */
+async function doCertUpload() {
+  const appNo = (document.getElementById('certAppNo').value||'').trim().toUpperCase();
+  const fi    = document.getElementById('certFile');
+  const file  = fi?.files[0];
+  const btn   = document.getElementById('certUploadBtn');
+  if (!/^UP\d{5}\/\d{2}$/.test(appNo)) { sfMsg('certMsg','❌ Invalid application number — format: UP12345/25','error'); return; }
+  if (!file) { sfMsg('certMsg','❌ Please select a certificate file','error'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Uploading…';
+  sfMsg('certMsg','','');
+  try {
+    const form = new FormData();
+    form.append('application_no', appNo);
+    form.append('file', file);
+    await AdminAPI.postForm('/api/certificate/upload', form);
+    sfMsg('certMsg', `✅ Certificate uploaded and application ${appNo} set to Approved`, 'success');
+    document.getElementById('certAppNo').value = '';
+    fi.value = '';
+    loadRecentCerts();
+  } catch(e) { sfMsg('certMsg','❌ '+e.message,'error'); }
+  finally { btn.disabled = false; btn.textContent = '📤 Upload Certificate'; }
+}
+
+async function loadRecentCerts() {
+  const el = document.getElementById('recentCertList');
+  if (!el) return;
+  try {
+    const res = await AdminAPI.get('/api/admin/logs?limit=10');
+    const logs = (res.data||[]).filter(l => l.action === 'upload_certificate');
+    if (!logs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><p>No certificate uploads yet</p></div>';
+    } else {
+      el.innerHTML = `<div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Application No</th><th>Uploaded By</th><th>Date</th></tr></thead>
+        <tbody>${logs.map(l=>`<tr>
+          <td style="font-weight:600;color:var(--navy2);">${esc(l.details||'—')}</td>
+          <td>${esc(l.actor)}</td>
+          <td style="color:var(--muted);font-size:12px;">${fmtDateTime(l.created_at)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:12px;">Could not load recent uploads</div>`;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   DUPLICATE REQUESTS
+   ═══════════════════════════════════════════════════ */
+let dupFilterVal = 'all', dupPage = 1;
+
+function dupFilter(f) {
+  dupFilterVal = f; dupPage = 1;
+  ['all','pending','approved','rejected'].forEach(v => {
+    const el = document.getElementById('dup-f-'+v); if (!el) return;
+    el.className = v===f ? 'btn btn-sm' : 'btn btn-outline btn-sm';
+    el.style.cssText = v===f ? 'background:var(--navy2);color:#fff;' : '';
+  });
+  loadDuplicates();
+}
+
+async function loadDuplicates() {
+  try {
+    const res = await StaffAPI.get(`/api/staff/duplicates?filter=${dupFilterVal}&page=${dupPage}`);
+    const { duplicates=[], total=0 } = res.data;
+    const tbody = document.getElementById('dupBody');
+
+    /* Sidebar badge for pending */
+    if (dupFilterVal === 'all') {
+      const pend = duplicates.filter(d=>d.status==='pending').length;
+      const badge = document.getElementById('nav-dup-badge');
+      if (pend > 0) { badge.textContent = pend; badge.style.display = ''; }
     }
 
-  } catch(e) {
-    showFlash('flash', '❌ Failed to load dashboard: ' + e.message, 'error');
-  }
-})();
+    if (!duplicates.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No duplicate requests found</td></tr>';
+      document.getElementById('dupPagination').innerHTML = '';
+      return;
+    }
 
-function escHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    tbody.innerHTML = duplicates.map((d,i) => `
+      <tr>
+        <td style="font-size:12px;color:var(--muted);">${(dupPage-1)*20+i+1}</td>
+        <td style="font-weight:600;color:var(--navy2);">${esc(d.application_no)}</td>
+        <td>${esc(d.name||'—')}</td>
+        <td style="font-size:12px;color:var(--muted);">${esc(d.district||'—')}</td>
+        <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(d.reason)}">${esc(d.reason||'—')}</td>
+        <td style="font-size:12px;color:var(--muted);">${fmtDate(d.created_at)}</td>
+        <td><span class="badge badge-${d.status}">${d.status}</span></td>
+        <td>
+          ${d.status === 'pending' ? `
+            <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+              <select id="dupCode_${d.id}" class="form-select" style="font-size:11px;padding:3px 5px;width:auto;">
+                <option value="D1">D1 — Original Lost</option>
+                <option value="D2">D2 — Name Change</option>
+              </select>
+              <button class="btn btn-sm" style="background:#16a34a;color:#fff;font-size:11px;padding:3px 8px;" onclick="actDuplicate(${d.id},'approved')">✓ Approve</button>
+              <button class="btn btn-sm" style="background:#dc2626;color:#fff;font-size:11px;padding:3px 8px;" onclick="actDuplicate(${d.id},'rejected')">✗ Reject</button>
+            </div>` : `<span style="font-size:12px;color:var(--muted);">${esc(d.issue_code||'—')}</span>`}
+        </td>
+      </tr>`).join('');
+
+    /* Pagination */
+    const totalPages = Math.ceil(total/20);
+    const pEl = document.getElementById('dupPagination'); pEl.innerHTML = '';
+    if (totalPages > 1) {
+      for (let p=1; p<=totalPages; p++) {
+        const btn = document.createElement('button');
+        btn.textContent = p; btn.className = 'btn btn-sm ' + (p===dupPage ? 'btn-primary' : 'btn-outline');
+        btn.onclick = () => { dupPage=p; loadDuplicates(); }; pEl.appendChild(btn);
+      }
+    }
+  } catch(e) {
+    document.getElementById('dupBody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:16px;">❌ ${esc(e.message)}</td></tr>`;
+  }
+}
+
+async function actDuplicate(id, action) {
+  const ic = action==='approved' ? (document.getElementById('dupCode_'+id)?.value||'D1') : null;
+  try {
+    await StaffAPI.patch(`/api/staff/duplicate/${id}`, { action, issue_code: ic });
+    loadDuplicates();
+  } catch(e) { alert('❌ ' + e.message); }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   OBJECTIONS
+   ═══════════════════════════════════════════════════ */
+let objFilterVal = 'all', objPage = 1;
+
+function objFilter(f) {
+  objFilterVal = f; objPage = 1;
+  ['all','pending','overdue','resolved'].forEach(v => {
+    const el = document.getElementById('obj-f-'+v); if (!el) return;
+    el.className = v===f ? 'btn btn-sm' : 'btn btn-outline btn-sm';
+    el.style.cssText = v===f ? 'background:var(--navy2);color:#fff;' : '';
+  });
+  loadObjections();
+}
+
+async function loadObjections() {
+  const search = (document.getElementById('objSearch')?.value||'').trim();
+  try {
+    const url = `/api/staff/objections?filter=${objFilterVal}&page=${objPage}&search=${encodeURIComponent(search)}`;
+    const res = await StaffAPI.get(url);
+    const { objections=[], total=0 } = res.data;
+    const tbody = document.getElementById('objBody');
+
+    if (!objections.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No objections found</td></tr>';
+      document.getElementById('objPagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = objections.map(o => {
+      const resolved = !!o.resolved;
+      const overdue  = !resolved && isOverdue(o.deadline);
+      const st    = resolved ? 'Resolved' : overdue ? 'Overdue' : 'Pending';
+      const badge = resolved ? 'badge-approved' : overdue ? 'badge-rejected' : 'badge-pending';
+      return `<tr>
+        <td style="font-weight:600;color:var(--navy2);white-space:nowrap;">${esc(o.application_no)}</td>
+        <td>${esc(o.name)}</td>
+        <td style="font-size:12px;">${esc(o.district||'—')}</td>
+        <td style="font-size:12px;">${esc(o.type)}</td>
+        <td style="font-size:12px;${overdue?'color:var(--red);font-weight:600;':''}">${fmtDate(o.deadline)}</td>
+        <td><span class="badge ${badge}">${st}</span></td>
+        <td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(o.staff_remark||'')}">${esc(o.staff_remark||'—')}</td>
+        <td>
+          <div style="display:flex;flex-direction:column;gap:5px;min-width:240px;">
+            <input id="objRem_${o.id}" class="form-input" placeholder="Add remark…"
+              style="font-size:11px;padding:4px 7px;" value="${esc(o.staff_remark||'')}"/>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              ${!resolved
+                ? `<button class="btn btn-sm" style="background:#16a34a;color:#fff;font-size:11px;padding:3px 8px;" onclick="objAct(${o.id},'resolve')">✓ Resolve</button>`
+                : `<button class="btn btn-sm" style="background:#d97706;color:#fff;font-size:11px;padding:3px 8px;" onclick="objAct(${o.id},'reopen')">↩ Reopen</button>`}
+              <button class="btn btn-outline btn-sm" style="font-size:11px;padding:3px 8px;" onclick="objAct(${o.id},'remark')">💬 Remark</button>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    /* Pagination */
+    const totalPages = Math.ceil(total/25);
+    const pEl = document.getElementById('objPagination'); pEl.innerHTML = '';
+    if (totalPages > 1) {
+      for (let p=1; p<=totalPages; p++) {
+        const btn = document.createElement('button');
+        btn.textContent = p; btn.className = 'btn btn-sm ' + (p===objPage ? 'btn-primary' : 'btn-outline');
+        btn.onclick = () => { objPage=p; loadObjections(); }; pEl.appendChild(btn);
+      }
+    }
+  } catch(e) {
+    document.getElementById('objBody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:16px;">❌ ${esc(e.message)}</td></tr>`;
+  }
+}
+
+async function objAct(id, action) {
+  const remark = (document.getElementById('objRem_'+id)?.value||'').trim();
+  if (action === 'remark' && !remark) { alert('Please enter a remark before saving'); return; }
+  try {
+    await StaffAPI.patch(`/api/staff/objection/${id}`, { action, staff_remark: remark });
+    loadObjections();
+  } catch(e) { alert('❌ ' + e.message); }
 }
 </script>
 </body>
