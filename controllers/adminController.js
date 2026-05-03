@@ -57,6 +57,170 @@ function columnMatchRate(rows, col, re) {
 const APP_NO_RE = /^UP\d{5}\/\d{2}$/;
 const MOBILE_RE = /^\d{10}$/;
 
+/* ── Flexible header aliases for auto-detection ────────────────────────────
+   Each key is the system field name; values are accepted Excel header names.
+   Matching is done after normalising to UPPERCASE + collapsing whitespace.   */
+const FIELD_ALIASES = {
+  application_no: [
+    'APPLICATION NO', 'APPLICATION NO.', 'APP NO', 'APP NO.', 'APPNO',
+    'APPLICATION NUMBER', 'ENROLLMENT NO', 'ENROLLMENT NO.', 'ENROLL NO',
+    'ENROLLMENT NUMBER', 'ENROLMENT NO', 'APPLICATION_NO', 'REG NO',
+    'REGISTRATION NO', 'REGISTRATION NUMBER', 'ROLL NO', 'ROLL NUMBER',
+  ],
+  name: [
+    'NAME', 'CANDIDATE NAME', 'CANDIDATE_NAME', 'STUDENT NAME',
+    'FULL NAME', 'APPLICANT NAME', 'CAND NAME', 'CAND. NAME',
+  ],
+  father_name: [
+    "FATHER NAME", "FATHER'S NAME", 'FATHERS NAME', 'FATHER_NAME',
+    'F NAME', 'F. NAME', 'GUARDIAN NAME', 'PARENT NAME',
+  ],
+  mobile: [
+    'MOBILE', 'MOBILE NO', 'MOBILE NO.', 'MOBILE NUMBER',
+    'PHONE', 'PHONE NO', 'PHONE NUMBER', 'CONTACT NO',
+    'CONTACT NUMBER', 'MOB NO', 'MOB', 'MOBILE_NO',
+  ],
+  district: [
+    'DISTRICT', 'DIST', 'DIST.', 'DISTRICT NAME',
+    'ZILA', 'ZILLA', 'DISTRICT_NAME', 'DIST NAME',
+  ],
+};
+
+/* Normalise a column header for alias comparison */
+function normaliseHeader(s) {
+  return String(s).trim().toUpperCase().replace(/[\s\-_\.]+/g, ' ').replace(/\s+/g, ' ');
+}
+
+/* Detect which Excel column maps to which system field.
+   Priority: exact alias match → partial alias match → value-pattern scan.   */
+function detectColumnMapping(columns, rows) {
+  const mapping   = {};
+  const usedCols  = new Set();
+
+  for (const [field, aliases] of Object.entries(FIELD_ALIASES)) {
+    /* 1. Exact match */
+    let found = columns.find(c => aliases.includes(normaliseHeader(c)));
+    /* 2. Partial match (alias contains header OR header contains alias) */
+    if (!found) {
+      found = columns.find(c => {
+        const n = normaliseHeader(c);
+        return aliases.some(a => n.includes(a) || a.includes(n));
+      });
+    }
+    if (found && !usedCols.has(found)) {
+      mapping[field] = found;
+      usedCols.add(found);
+    }
+  }
+
+  /* 3. Value-pattern fallback for application_no and mobile */
+  if (!mapping.application_no) {
+    const col = columns.find(c => !usedCols.has(c) && columnMatchRate(rows, c, APP_NO_RE) >= 0.5);
+    if (col) { mapping.application_no = col; usedCols.add(col); }
+  }
+  if (!mapping.mobile) {
+    const col = columns.find(c => !usedCols.has(c) && columnMatchRate(rows, c, MOBILE_RE) >= 0.5);
+    if (col) { mapping.mobile = col; usedCols.add(col); }
+  }
+
+  return mapping;
+}
+
+/* ── Fully-automatic single-step Excel import ── */
+async function autoImportExcel(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'Excel file required', data: null });
+
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet     = workbook.Sheets[sheetName];
+    const rows      = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+
+    if (!rows.length) return res.status(400).json({ success: false, message: 'Excel file is empty or has no data rows', data: null });
+
+    const columns = Object.keys(rows[0]);
+
+    /* ── Debug ── */
+    console.log('\n[AutoImport] ──────────────────────────────────');
+    console.log('[AutoImport] Sheet:', sheetName, '| Rows:', rows.length);
+    console.log('[AutoImport] Columns:', columns);
+    console.log('[AutoImport] Sample row:', JSON.stringify(rows[0]));
+
+    /* ── Auto-detect column mapping ── */
+    const mapping = detectColumnMapping(columns, rows);
+    console.log('[AutoImport] Detected mapping:', mapping);
+
+    /* ── Check all required fields were found ── */
+    const REQUIRED = ['application_no', 'name', 'father_name', 'mobile', 'district'];
+    const missing  = REQUIRED.filter(f => !mapping[f]);
+    if (missing.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Could not auto-detect columns for: ${missing.join(', ')}. ` +
+          `Available headers: ${columns.join(', ')}. ` +
+          `Please rename your Excel headers to standard names (e.g. "Application No", "Name", "Father Name", "Mobile", "District").`,
+        data: { total: rows.length, inserted: 0, skipped: 0, errors: [], detectedColumns: mapping, missingFields: missing, availableColumns: columns }
+      });
+    }
+
+    let inserted = 0, skipped = 0;
+    const errors = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+
+      /* Smart clean */
+      const application_no = cleanAppNo(String(r[mapping.application_no] || ''));
+      const name           = String(r[mapping.name]        || '').trim();
+      const father_name    = String(r[mapping.father_name] || '').trim();
+      const mobile         = String(r[mapping.mobile]      || '').trim().replace(/\D/g, '');
+      const district       = String(r[mapping.district]    || '').trim();
+
+      /* Skip blank rows silently */
+      if (!application_no && !name && !father_name && !mobile && !district) { skipped++; continue; }
+
+      /* Validate */
+      if (!validateApplicationNo(application_no)) {
+        errors.push({ row: i + 2, field: 'application_no', raw: String(r[mapping.application_no] || ''), cleaned: application_no, error: 'Invalid format — expected UP#####/YY (e.g. UP00001/25)' });
+        continue;
+      }
+      if (!validateMobile(mobile)) {
+        errors.push({ row: i + 2, field: 'mobile', raw: String(r[mapping.mobile] || ''), cleaned: mobile, error: 'Must be exactly 10 digits' });
+        continue;
+      }
+      if (!name)        { errors.push({ row: i + 2, field: 'name',        raw: '', cleaned: '', error: 'Field is empty' }); continue; }
+      if (!father_name) { errors.push({ row: i + 2, field: 'father_name', raw: '', cleaned: '', error: 'Field is empty' }); continue; }
+      if (!district)    { errors.push({ row: i + 2, field: 'district',    raw: '', cleaned: '', error: 'Field is empty' }); continue; }
+
+      /* Duplicate check */
+      const dup = await pool.query('SELECT id FROM applications WHERE application_no=$1', [application_no]);
+      if (dup.rows.length) {
+        errors.push({ row: i + 2, field: 'application_no', raw: application_no, cleaned: application_no, error: 'Already exists in database' });
+        continue;
+      }
+
+      /* Insert */
+      await pool.query(
+        'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)',
+        [application_no, name, father_name, mobile, district]
+      );
+      inserted++;
+    }
+
+    console.log(`[AutoImport] Done: inserted=${inserted}, skipped=${skipped}, errors=${errors.length}`);
+    console.log('[AutoImport] ──────────────────────────────────\n');
+
+    await logAction(req.user.username, 'admin', 'excel_auto_import',
+      `inserted=${inserted}, skipped=${skipped}, errors=${errors.length}`);
+
+    res.json({
+      success: true,
+      message: `Import complete — ${inserted} inserted, ${skipped} skipped, ${errors.length} errors`,
+      data: { total: rows.length, inserted, skipped, errors, detectedColumns: mapping, sheetName }
+    });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
 /* ── Phase 1: Upload & Preview ── */
 async function previewExcel(req, res) {
   try {
@@ -408,7 +572,7 @@ async function adminLogin(req, res, next) {
 }
 
 module.exports = {
-  uploadExcelApplications, previewExcel, importExcel,
+  uploadExcelApplications, previewExcel, importExcel, autoImportExcel,
   overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
   getStats, getApplications, getApplicationById, updateApplicationStatus,
   getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
