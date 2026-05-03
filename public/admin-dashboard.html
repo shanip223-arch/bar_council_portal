@@ -620,6 +620,8 @@ function closeSidebar() {
 /* ── Section switcher ────────────────────────────────────── */
 const ALL_SECTIONS = ['dashboard','applications','alerts','staff','logs','objections','uploads','settings'];
 function showSection(id) {
+  // Block restricted sections for staff role
+  if (AD.blockedSections?.includes(id)) return;
   ALL_SECTIONS.forEach(s => {
     document.getElementById(s).classList.toggle('active', s === id);
     const nav = document.getElementById('snav-'+s);
@@ -1214,16 +1216,26 @@ async function doCertUpload() {
    INIT
    ════════════════════════════════════════════════════════ */
 (function init() {
-  // Populate user info from JWT
-  const tok = getAdminToken();
-  if (tok) {
-    const p = jwtDecode(tok);
-    const name = p.username || 'Admin';
-    const role = p.role    || 'admin';
-    document.getElementById('sideName').textContent   = name;
-    document.getElementById('sideRole').textContent   = role;
-    document.getElementById('sideAvatar').textContent = name[0].toUpperCase();
-    document.getElementById('hdrSubtitle').textContent = '| Logged in as ' + name;
+  // Detect which token is available and decode role
+  const tok  = getAdminToken() || getStaffToken();
+  const role = tok ? (jwtDecode(tok).role || 'staff') : 'staff';
+  const name = tok ? (jwtDecode(tok).username || 'User') : 'User';
+
+  document.getElementById('sideName').textContent    = name;
+  document.getElementById('sideRole').textContent    = role === 'admin' ? 'Administrator' : 'Staff';
+  document.getElementById('sideAvatar').textContent  = name[0].toUpperCase();
+  document.getElementById('hdrSubtitle').textContent = '| ' + name + ' (' + role + ')';
+
+  // ── Role-based access control ──────────────────────────
+  // Staff cannot see Staff Management or Settings sections
+  const STAFF_BLOCKED = ['staff', 'settings'];
+  if (role !== 'admin') {
+    STAFF_BLOCKED.forEach(s => {
+      const navEl = document.getElementById('snav-' + s);
+      if (navEl) navEl.style.display = 'none';
+    });
+    // Store restricted list for showSection guard
+    AD.blockedSections = STAFF_BLOCKED;
   }
 
   // Wire sidebar [data-section] links (defined in assets/main.js)

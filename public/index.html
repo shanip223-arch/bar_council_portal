@@ -5,6 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>उत्तर प्रदेश बार काउंसिल – प्रमाण पत्र पोर्टल</title>
   <link rel="stylesheet" href="/assets/style.css"/>
+  <style>
+    /* ── Administrator Access section ── */
+    .admin-access-section {
+      background: #eef2fb;
+      border-top: 4px solid var(--navy2, #0b3d91);
+      padding: 32px 0 36px;
+    }
+    .admin-section-head {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .admin-section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--navy2, #0b3d91);
+      color: #fff;
+      padding: 9px 28px;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .admin-section-sub {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+    .admin-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+    @media (max-width: 640px) {
+      .admin-cards-grid { grid-template-columns: 1fr; }
+    }
+    .admin-card {
+      background: #fff;
+      border: 1px solid #c8d3ea;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .admin-card-head {
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-card-head.blue  { background: #0b3d91; }
+    .admin-card-head.teal  { background: #0d5f6e; }
+    .admin-card-body { padding: 18px; }
+    .admin-card-note {
+      background: #f0f4ff;
+      border-left: 3px solid #0b3d91;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #334;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .admin-card-note.teal-note {
+      background: #edfcff;
+      border-left-color: #0d5f6e;
+    }
+    .captcha-box { display:flex; align-items:center; gap:8px; }
+    .captcha-img {
+      background:#1a2e6e; color:#fff; padding:6px 14px;
+      border-radius:4px; font-family:monospace; font-size:17px;
+      letter-spacing:4px; font-weight:700; user-select:none;
+    }
+    .captcha-refresh {
+      background:none; border:1px solid #bbb; border-radius:4px;
+      padding:4px 8px; cursor:pointer; font-size:14px;
+    }
+  </style>
 </head>
 <body>
 
@@ -61,112 +141,63 @@
 
 <!-- Breadcrumb -->
 <div class="breadcrumb">
-  <span>🏠</span> <a href="/">होम</a> <span class="sep">›</span> <span>लॉगिन | Login</span>
+  <span>🏠</span> <a href="/">होम</a> <span class="sep">›</span> <span>अभ्यर्थी लॉगिन | Candidate Login</span>
 </div>
 
-<!-- Main -->
+<!-- ════ CANDIDATE LOGIN SECTION ════ -->
 <main id="main">
 <div class="login-section">
-  <div class="main-wrap" style="max-width:960px;">
+  <div class="main-wrap" style="max-width:600px;">
 
-    <!-- Page Title -->
     <div style="text-align:center; margin-bottom:22px;">
       <h2 style="font-size:20px; color:var(--navy2); font-weight:700;">अधिवक्ता प्रमाण पत्र पोर्टल में आपका स्वागत है</h2>
       <p style="color:#666; font-size:13px; margin-top:4px;">Welcome to UP Bar Council Advocate Certificate Portal</p>
     </div>
 
-    <!-- Instructions -->
     <div class="instructions" style="margin-bottom:20px;">
       <h4>📌 महत्वपूर्ण निर्देश | Important Instructions</h4>
       <ul>
         <li>अभ्यर्थी अपनी आवेदन संख्या (UP12345/25 प्रारूप में) दर्ज करें और OTP प्राप्त करें।</li>
         <li>Candidates enter their Application No (format UP12345/25) and receive OTP for login.</li>
-        <li>कर्मचारी / प्रशासक अपना यूज़रनेम और पासवर्ड दर्ज करें। | Admin/Staff enter username &amp; password.</li>
         <li>OTP की वैधता 5 मिनट है। | OTP is valid for 5 minutes only.</li>
       </ul>
     </div>
 
-    <div class="form-row" style="gap:22px; align-items:start;">
-
-      <!-- Candidate Login -->
-      <div class="login-card">
-        <div class="login-card-head">
-          👤 अभ्यर्थी लॉगिन | Candidate Login
-        </div>
-        <div class="login-card-body">
-          <div class="otp-note">
-            📱 OTP आपके पंजीकृत मोबाइल नंबर पर भेजा जाएगा।<br>OTP will be sent to your registered mobile number.
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="candApp">आवेदन संख्या <span class="required">*</span> <span style="font-weight:400;color:#888;">(Application No)</span></label>
-            <input class="form-input" id="candApp" placeholder="जैसे: UP12345/25" autocomplete="off" maxlength="10"/>
-            <div class="form-hint">प्रारूप: UP##### /YY (Example: UP00123/25)</div>
-          </div>
-
-          <div id="candOtpMsg" class="msg"></div>
-          <button class="btn btn-saffron btn-full" id="reqOtpBtn" onclick="requestCandidateOtp()">
-            📤 OTP प्राप्त करें | Request OTP
-          </button>
-
-          <hr style="border:none; border-top:1px solid #e8edf5; margin:16px 0;"/>
-
-          <div class="form-group">
-            <label class="form-label" for="candOtp">OTP दर्ज करें <span class="required">*</span> <span style="font-weight:400;color:#888;">(6 digits)</span></label>
-            <input class="form-input" id="candOtp" placeholder="● ● ● ● ● ●" maxlength="6" inputmode="numeric" autocomplete="one-time-code"/>
-          </div>
-
-          <div id="candVerifyMsg" class="msg"></div>
-          <button class="btn btn-primary btn-full" id="verifyOtpBtn" onclick="verifyCandidateOtp()">
-            ✅ OTP सत्यापित करें | Verify OTP &amp; Login
-          </button>
-        </div>
+    <!-- Candidate Login card (centred, full-width within 600px wrap) -->
+    <div class="login-card">
+      <div class="login-card-head">
+        👤 अभ्यर्थी लॉगिन | Candidate Login
       </div>
-
-      <!-- Admin/Staff Login -->
-      <div class="login-card">
-        <div class="login-card-head" style="background:var(--navy2);">
-          🔐 प्रशासक / कर्मचारी लॉगिन | Admin / Staff Login
+      <div class="login-card-body">
+        <div class="otp-note">
+          📱 OTP आपके पंजीकृत मोबाइल नंबर पर भेजा जाएगा।<br>OTP will be sent to your registered mobile number.
         </div>
-        <div class="login-card-body">
 
-          <div class="otp-note" style="background:#e8edf8; border-color:#a0b0cc; color:#003;">
-            🔒 यह अनुभाग केवल अधिकृत कर्मचारियों के लिए है।<br>This section is for authorized staff only.
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="user">उपयोगकर्ता नाम <span class="required">*</span> <span style="font-weight:400;color:#888;">(Username)</span></label>
-            <input class="form-input" id="user" placeholder="Username" autocomplete="username"/>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="pass">पासवर्ड <span class="required">*</span> <span style="font-weight:400;color:#888;">(Password)</span></label>
-            <input class="form-input" id="pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-          </div>
-
-          <div class="form-group" style="margin-bottom:8px;">
-            <label class="form-label">कैप्चा <span class="required">*</span> <span style="font-weight:400;color:#888;">(Captcha)</span></label>
-            <div class="captcha-box">
-              <div class="captcha-img" id="captchaText">K7M2X</div>
-              <button class="captcha-refresh" onclick="refreshCaptcha()" title="Refresh">🔄</button>
-              <input class="form-input" id="captchaInput" placeholder="Enter captcha" style="max-width:120px;"/>
-            </div>
-          </div>
-
-          <div id="userLoginMsg" class="msg"></div>
-          <button class="btn btn-primary btn-full" id="userLoginBtn" onclick="loginUser()" style="margin-top:10px;">
-            🔑 लॉगिन करें | Login
-          </button>
-
-          <div style="text-align:center; margin-top:12px; font-size:12px; color:#888;">
-            पासवर्ड भूल गये? कार्यालय से संपर्क करें।<br>Forgot password? Contact office.
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="candApp">आवेदन संख्या <span class="required">*</span> <span style="font-weight:400;color:#888;">(Application No)</span></label>
+          <input class="form-input" id="candApp" placeholder="जैसे: UP12345/25" autocomplete="off" maxlength="10"/>
+          <div class="form-hint">प्रारूप: UP##### /YY (Example: UP00123/25)</div>
         </div>
+
+        <div id="candOtpMsg" class="msg"></div>
+        <button class="btn btn-saffron btn-full" id="reqOtpBtn" onclick="requestCandidateOtp()">
+          📤 OTP प्राप्त करें | Request OTP
+        </button>
+
+        <hr style="border:none; border-top:1px solid #e8edf5; margin:16px 0;"/>
+
+        <div class="form-group">
+          <label class="form-label" for="candOtp">OTP दर्ज करें <span class="required">*</span> <span style="font-weight:400;color:#888;">(6 digits)</span></label>
+          <input class="form-input" id="candOtp" placeholder="● ● ● ● ● ●" maxlength="6" inputmode="numeric" autocomplete="one-time-code"/>
+        </div>
+
+        <div id="candVerifyMsg" class="msg"></div>
+        <button class="btn btn-primary btn-full" id="verifyOtpBtn" onclick="verifyCandidateOtp()">
+          ✅ OTP सत्यापित करें | Verify OTP &amp; Login
+        </button>
       </div>
+    </div>
 
-    </div><!-- /grid -->
-
-    <!-- Links -->
     <div style="text-align:center; margin-top:22px; padding-top:16px; border-top:1px solid #dde4f0;">
       <a href="/duplicate" style="color:var(--navy); font-size:13px; font-weight:700; text-decoration:none;">
         📋 डुप्लीकेट प्रमाण पत्र के लिए आवेदन करें | Apply for Duplicate Certificate →
@@ -176,6 +207,91 @@
   </div>
 </div>
 </main>
+
+<!-- ════ ADMINISTRATOR ACCESS SECTION ════ -->
+<section class="admin-access-section" id="admin-access">
+  <div class="main-wrap" style="max-width:960px;">
+
+    <div class="admin-section-head">
+      <div class="admin-section-badge">🔐 Administrator Access | प्रशासक पहुँच</div>
+      <div class="admin-section-sub">यह अनुभाग केवल अधिकृत प्रशासकों और कर्मचारियों के लिए है | For authorized personnel only</div>
+    </div>
+
+    <div class="admin-cards-grid">
+
+      <!-- ── ADMIN LOGIN CARD ── -->
+      <div class="admin-card">
+        <div class="admin-card-head blue">
+          🛡️ Admin Login | व्यवस्थापक लॉगिन
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-card-note">
+            🔒 पूर्ण प्रशासक पहुँच — सभी अनुभाग उपलब्ध हैं।<br>Full admin access — all sections available.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminUser">उपयोगकर्ता नाम <span class="required">*</span></label>
+            <input class="form-input" id="adminUser" placeholder="Admin username" autocomplete="username"/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminPass">पासवर्ड <span class="required">*</span></label>
+            <input class="form-input" id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label">कैप्चा <span class="required">*</span></label>
+            <div class="captcha-box">
+              <div class="captcha-img" id="adminCaptchaText">K7M2X</div>
+              <button class="captcha-refresh" onclick="refreshAdminCaptcha()" title="Refresh">🔄</button>
+              <input class="form-input" id="adminCaptchaInput" placeholder="Enter captcha" style="max-width:120px;"/>
+            </div>
+          </div>
+
+          <div id="adminLoginMsg" class="msg"></div>
+          <button class="btn btn-primary btn-full" id="adminLoginBtn" onclick="doAdminLoginWithCaptcha()" style="margin-top:10px;">
+            🔑 Admin Login
+          </button>
+          <div style="text-align:center; margin-top:10px; font-size:11px; color:#999;">
+            पासवर्ड भूल गये? कार्यालय से संपर्क करें | Forgot password? Contact office.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STAFF LOGIN CARD ── -->
+      <div class="admin-card">
+        <div class="admin-card-head teal">
+          👤 Staff Login | कर्मचारी लॉगिन
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-card-note teal-note">
+            📋 सीमित पहुँच — अपलोड, आपत्तियाँ और डैशबोर्ड उपलब्ध।<br>Limited access — uploads, objections &amp; dashboard available.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="staffUser">उपयोगकर्ता नाम <span class="required">*</span></label>
+            <input class="form-input" id="staffUser" placeholder="Staff username" autocomplete="username"/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="staffPass">पासवर्ड <span class="required">*</span></label>
+            <input class="form-input" id="staffPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+
+          <div id="staffLoginMsg" class="msg" style="margin-top:6px;"></div>
+          <button class="btn btn-full" id="staffLoginBtn" onclick="staffLogin()"
+            style="margin-top:10px; background:#0d5f6e; color:#fff; border-color:#0d5f6e;">
+            🔑 Staff Login
+          </button>
+          <div style="text-align:center; margin-top:10px; font-size:11px; color:#999;">
+            पासवर्ड भूल गये? कार्यालय से संपर्क करें | Forgot password? Contact office.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /admin-cards-grid -->
+  </div>
+</section>
 
 <!-- Footer -->
 <footer class="gov-footer">
@@ -207,28 +323,41 @@
   </div>
 </footer>
 
-<script src="/assets/app.js"></script>
+<script src="/assets/main.js"></script>
 <script>
+/* ── Admin captcha ── */
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-let currentCaptcha = 'K7M2X';
-function refreshCaptcha() {
+let adminCaptcha = 'K7M2X';
+
+function refreshAdminCaptcha() {
   let s = '';
   for (let i = 0; i < 5; i++) s += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
-  currentCaptcha = s;
-  document.getElementById('captchaText').textContent = s;
-  document.getElementById('captchaInput').value = '';
+  adminCaptcha = s;
+  document.getElementById('adminCaptchaText').textContent = s;
+  document.getElementById('adminCaptchaInput').value = '';
 }
-// Override loginUser to include captcha check
-const _origLogin = window.loginUser;
-window.loginUser = function() {
-  const cap = document.getElementById('captchaInput').value.trim().toUpperCase();
-  if (cap !== currentCaptcha) {
-    setMsg('userLoginMsg', 'कैप्चा गलत है। पुनः प्रयास करें। | Incorrect captcha.', 'error');
-    refreshCaptcha();
+
+function doAdminLoginWithCaptcha() {
+  const entered = document.getElementById('adminCaptchaInput').value.trim().toUpperCase();
+  if (entered !== adminCaptcha) {
+    setMsg('adminLoginMsg', '❌ कैप्चा गलत है। पुनः प्रयास करें | Incorrect captcha.', 'error');
+    refreshAdminCaptcha();
     return;
   }
-  _origLogin();
-};
+  doAdminLogin();
+}
+
+/* Allow Enter key on admin fields */
+['adminUser','adminPass','adminCaptchaInput'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLoginWithCaptcha(); });
+});
+
+/* Allow Enter key on staff fields */
+['staffUser','staffPass'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') staffLogin(); });
+});
 </script>
 </body>
 </html>

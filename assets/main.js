@@ -26,7 +26,7 @@ function authHeaders(admin) {
   return { Authorization: 'Bearer ' + t };
 }
 function adminHeaders() {
-  return { Authorization: 'Bearer ' + getAdminToken() };
+  return { Authorization: 'Bearer ' + getPrivToken() };
 }
 function staffHeaders() {
   return { Authorization: 'Bearer ' + getPrivToken() };
@@ -67,12 +67,12 @@ function showFlash(id, text, type) {
   /* /admin — redirect away if already authenticated */
   if (path === '/admin') {
     if (adminToken) { window.location.href = '/admin-dashboard'; return; }
-    if (staffToken) { window.location.href = '/staff-dashboard'; return; }
+    if (staffToken) { window.location.href = '/admin-dashboard'; return; }
   }
 
-  /* Admin-only area */
+  /* Admin dashboard — accessible by admin OR staff */
   if (path === '/admin-dashboard') {
-    if (!adminToken) { window.location.href = '/admin'; return; }
+    if (!adminToken && !staffToken) { window.location.href = '/admin'; return; }
   }
 
   /* Candidate dashboard */
@@ -174,6 +174,56 @@ const StaffAPI = {
   }
 };
 
+// ── Admin login (dedicated admin card on index.html) ────────
+async function doAdminLogin() {
+  const username = (document.getElementById('adminUser')?.value || '').trim();
+  const password = (document.getElementById('adminPass')?.value || '').trim();
+  const btn = document.getElementById('adminLoginBtn');
+  if (!username || !password) return setMsg('adminLoginMsg', '❌ Username and password required', 'error');
+  if (btn) { btn.disabled = true; btn.textContent = 'Logging in…'; }
+  try {
+    setMsg('adminLoginMsg', '');
+    const d = await API.post('/api/admin/login', { username, password });
+    const { token, role } = d.data;
+    if (role !== 'admin') {
+      setMsg('adminLoginMsg', '❌ Admin credentials required for this login.', 'error');
+      return;
+    }
+    setAdminToken(token); setStoredRole(role);
+    setMsg('adminLoginMsg', '✅ Login successful. Redirecting…', 'success');
+    setTimeout(() => { window.location.href = '/admin-dashboard'; }, 600);
+  } catch(e) {
+    setMsg('adminLoginMsg', '❌ ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔑 Admin Login'; }
+  }
+}
+
+// ── Staff login (dedicated staff card on index.html) ─────────
+async function staffLogin() {
+  const username = (document.getElementById('staffUser')?.value || '').trim();
+  const password = (document.getElementById('staffPass')?.value || '').trim();
+  const btn = document.getElementById('staffLoginBtn');
+  if (!username || !password) return setMsg('staffLoginMsg', '❌ Username and password required', 'error');
+  if (btn) { btn.disabled = true; btn.textContent = 'Logging in…'; }
+  try {
+    setMsg('staffLoginMsg', '');
+    const d = await API.post('/api/admin/login', { username, password });
+    const { token, role } = d.data;
+    if (role === 'admin') {
+      setAdminToken(token); setStoredRole(role);
+    } else {
+      setStaffToken(token); setStoredRole(role);
+    }
+    setMsg('staffLoginMsg', '✅ Login successful. Redirecting…', 'success');
+    setTimeout(() => { window.location.href = '/admin-dashboard'; }, 600);
+  } catch(e) {
+    setMsg('staffLoginMsg', '❌ ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔑 Staff Login'; }
+  }
+}
+
 // ── Login (differentiates admin vs staff by role) ───────────
 async function loginUser() {
   const username = (document.getElementById('user')?.value || '').trim();
@@ -205,6 +255,7 @@ async function loginUser() {
 // ── Logout helpers ──────────────────────────────────────────
 function logoutAdmin() {
   localStorage.removeItem('adminToken');
+  localStorage.removeItem('staffToken');
   localStorage.removeItem('portalRole');
   window.location.href = '/admin';
 }
