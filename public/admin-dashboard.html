@@ -386,7 +386,7 @@
           <label class="form-label">Excel File (.xlsx)</label>
           <input class="file-input" type="file" id="excelFile" accept=".xlsx,.xls"/>
         </div>
-        <button class="btn btn-primary" onclick="doExcelUpload()">📤 Upload Excel</button>
+        <button class="btn btn-primary" id="excelBtn" onclick="doExcelUpload()">📤 Upload Excel</button>
         <div id="excelMsg" class="msg" style="margin-top:10px;"></div>
         <div class="output-box" id="excelOut" style="margin-top:10px;"></div>
       </div>
@@ -962,18 +962,37 @@ async function doOverride() {
 }
 
 async function doExcelUpload() {
-  const file = document.getElementById('excelFile').files[0];
-  if (!file) { setFieldMsg('excelMsg','Please select an Excel file','error'); return; }
+  const fileInput = document.getElementById('excelFile');
+  const file = fileInput.files[0];
+  const btn  = document.getElementById('excelBtn');
+  const out  = document.getElementById('excelOut');
+
+  if (!file) { setFieldMsg('excelMsg', '❌ Please select an .xlsx or .xls file', 'error'); return; }
+
+  // Loading state — do NOT set Content-Type; browser sets multipart/form-data + boundary automatically
+  btn.disabled = true; btn.textContent = '⏳ Uploading…';
+  setFieldMsg('excelMsg', '', '');
+  out.classList.remove('show'); out.textContent = '';
+
   try {
-    setFieldMsg('excelMsg','⏳ Uploading…','');
     const form = new FormData();
-    form.append('file', file);
-    const res = await AdminAPI.postForm('/api/admin/excel-upload', form);
-    setFieldMsg('excelMsg','✅ ' + res.message,'success');
-    const out = document.getElementById('excelOut');
-    out.textContent = JSON.stringify(res.data, null, 2);
+    form.append('file', file);               // key must match upload.single('file')
+
+    // AdminAPI.postForm uses: fetch(url, { method:'POST', headers: adminHeaders(), body: formData })
+    // adminHeaders() returns ONLY { Authorization: 'Bearer <token>' } — no Content-Type
+    const res = await AdminAPI.postForm('/api/admin/upload-excel', form);
+
+    setFieldMsg('excelMsg', '✅ ' + res.message, 'success');
+    const { inserted = 0, errors = [] } = res.data || {};
+    out.textContent = `Inserted : ${inserted} record(s)\nErrors   : ${errors.length}\n\n`
+      + (errors.length ? JSON.stringify(errors, null, 2) : '');
     out.classList.add('show');
-  } catch(e) { setFieldMsg('excelMsg','❌ '+e.message,'error'); }
+    fileInput.value = '';                    // reset picker
+  } catch(e) {
+    setFieldMsg('excelMsg', '❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📤 Upload Excel';
+  }
 }
 
 async function doBackup() {
