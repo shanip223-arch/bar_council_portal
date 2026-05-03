@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Objection Management – UP Bar Council Staff</title>
+  <link rel="stylesheet" href="/assets/admin.css"/>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">⚖️</div>
+      <div class="brand-text">
+        <div class="name">UP Bar Council</div>
+        <div class="sub">Staff Portal</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Navigation</div>
+    <nav>
+      <button class="nav-link" onclick="location.href='/staff-dashboard'"><span class="nav-icon">🏠</span> Dashboard</button>
+      <button class="nav-link active" onclick="location.href='/staff-objections'"><span class="nav-icon">📋</span> Objections</button>
+      <button class="nav-link" onclick="location.href='/staff-uploads'"><span class="nav-icon">📁</span> Upload Review</button>
+    </nav>
+    <div class="sidebar-section-label" style="margin-top:auto;">Account</div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" id="avatarLetter">S</div>
+        <div><div id="staffName" style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div><div style="font-size:10px;color:#64748b;">Staff Member</div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="logoutStaff()">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="top-header">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <span class="page-title">Objection Management</span>
+      <span class="page-subtitle">| आपत्ति प्रबंधन</span>
+      <div class="header-spacer"></div>
+      <div class="header-search">
+        <span>🔍</span>
+        <input id="searchInput" placeholder="Search by App No / Name…" oninput="debounceLoad()"/>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div id="flash" class="flash" style="display:none;margin-bottom:14px;"></div>
+
+      <!-- FILTERS -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📋 Objections List</span>
+          <div class="toolbar">
+            <div class="filter-btns">
+              <button class="filter-btn active" data-f="all"      onclick="setFilter('all',this)">All</button>
+              <button class="filter-btn"        data-f="pending"  onclick="setFilter('pending',this)">Pending</button>
+              <button class="filter-btn"        data-f="overdue"  onclick="setFilter('overdue',this)" style="color:#dc2626;">Overdue ⚠️</button>
+              <button class="filter-btn"        data-f="resolved" onclick="setFilter('resolved',this)">Resolved ✅</button>
+            </div>
+            <span id="totalCount" style="font-size:12px;color:#64748b;"></span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#ID</th>
+                <th>Application No</th>
+                <th>Candidate Name</th>
+                <th>Type</th>
+                <th>Deadline</th>
+                <th>Status</th>
+                <th>Uploads</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="objTable"><tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL / ACTION MODAL -->
+<div class="modal-overlay" id="objModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Objection Details</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Close</button>
+      <button class="btn btn-success" id="btnResolve" onclick="doAction('resolve')">✅ Mark Resolved</button>
+      <button class="btn btn-danger"  id="btnReopen"  onclick="doAction('reopen')" style="display:none;">🔁 Reopen</button>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/main.js"></script>
+<script>
+let currentFilter = 'all';
+let currentPage   = 1;
+let currentObj    = null;
+let debounceTimer = null;
+
+function escHtml(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* Init */
+(function init() {
+  const tok = getPrivToken();
+  if (tok) { const p = decodeJwt(tok); const n=p.username||'Staff'; document.getElementById('staffName').textContent=n; document.getElementById('avatarLetter').textContent=n[0].toUpperCase(); }
+  loadObjections();
+})();
+
+function decodeJwt(t) { try{return JSON.parse(atob(t.split('.')[1]));}catch(e){return{};} }
+
+function setFilter(f, el) {
+  currentFilter = f; currentPage = 1;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadObjections();
+}
+function debounceLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { currentPage=1; loadObjections(); }, 350); }
+
+async function loadObjections() {
+  const search = document.getElementById('searchInput').value.trim();
+  const tbody = document.getElementById('objTable');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr>';
+  try {
+    const url = `/api/staff/objections?filter=${currentFilter}&search=${encodeURIComponent(search)}&page=${currentPage}&limit=20`;
+    const res = await StaffAPI.get(url);
+    const { objections, total, page, limit } = res.data;
+    document.getElementById('totalCount').textContent = `Total: ${total}`;
+    if (!objections.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>No objections found</p></div></td></tr>'; renderPagination(total,page,limit); return; }
+    tbody.innerHTML = objections.map(o => {
+      const overdue = !o.resolved && new Date(o.deadline) < new Date();
+      const statusBadge = o.resolved
+        ? '<span class="badge badge-approved">Resolved</span>'
+        : overdue ? '<span class="badge badge-rejected">Overdue</span>'
+        : '<span class="badge badge-pending">Pending</span>';
+      return `<tr>
+        <td><b>#${o.id}</b></td>
+        <td><code>${escHtml(o.application_no)}</code></td>
+        <td class="truncate">${escHtml(o.name)}</td>
+        <td>${escHtml(o.type)}</td>
+        <td style="${overdue?'color:#dc2626;font-weight:700;':''}">${fmtDate(o.deadline)}</td>
+        <td>${statusBadge}</td>
+        <td style="text-align:center;">${o.upload_count}</td>
+        <td>
+          <button class="btn btn-outline btn-xs" onclick='openModal(${JSON.stringify(o)})'>👁 View</button>
+        </td>
+      </tr>`;
+    }).join('');
+    renderPagination(total, page, limit);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="alert alert-error">❌ ${escHtml(e.message)}</div></td></tr>`;
+  }
+}
+
+function renderPagination(total, page, limit) {
+  const pages = Math.ceil(total / limit);
+  const el = document.getElementById('pagination');
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  let html = `<button class="page-btn" ${page<=1?'disabled':''} onclick="goPage(${page-1})">‹</button>`;
+  for (let i=1; i<=pages; i++) {
+    if (i===1||i===pages||Math.abs(i-page)<=1) html += `<button class="page-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    else if (Math.abs(i-page)===2) html += `<span style="padding:0 4px;color:#94a3b8;">…</span>`;
+  }
+  html += `<button class="page-btn" ${page>=pages?'disabled':''} onclick="goPage(${page+1})">›</button>`;
+  el.innerHTML = html;
+}
+function goPage(p) { currentPage = p; loadObjections(); }
+
+function openModal(obj) {
+  currentObj = obj;
+  const overdue = !obj.resolved && new Date(obj.deadline) < new Date();
+  document.getElementById('modalTitle').textContent = `Objection #${obj.id} — ${obj.application_no}`;
+  document.getElementById('btnResolve').style.display = obj.resolved ? 'none' : '';
+  document.getElementById('btnReopen').style.display  = obj.resolved ? ''     : 'none';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${escHtml(obj.application_no)}</code></span></div>
+      <div class="detail-row"><span class="detail-key">Candidate Name</span><span class="detail-val">${escHtml(obj.name)}</span></div>
+      <div class="detail-row"><span class="detail-key">District</span><span class="detail-val">${escHtml(obj.district||'—')}</span></div>
+      <div class="detail-row"><span class="detail-key">Objection Type</span><span class="detail-val">${escHtml(obj.type)}</span></div>
+      <div class="detail-row"><span class="detail-key">Deadline</span><span class="detail-val" style="${overdue?'color:#dc2626;font-weight:700;':''}">${fmtDate(obj.deadline)}${overdue?' ⚠️ OVERDUE':''}</span></div>
+      <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${obj.resolved?'✅ Resolved':'⏳ Pending'}</span></div>
+      <div class="detail-row"><span class="detail-key">Uploads</span><span class="detail-val">${obj.upload_count} document(s)</span></div>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="form-label">Original Remark</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px;font-size:13px;">${escHtml(obj.remark)}</div>
+    </div>
+    ${obj.staff_remark ? `<div style="margin-top:10px;"><div class="form-label">Previous Staff Remark</div><div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px 12px;font-size:13px;">${escHtml(obj.staff_remark)}</div></div>` : ''}
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label" for="staffRemark">Staff Remark / नोट <span style="color:#94a3b8;">(optional)</span></label>
+      <textarea class="form-textarea" id="staffRemark" placeholder="Add your remark or note here…" rows="3"></textarea>
+    </div>
+    <div id="modalFlash" style="display:none;" class="flash" style="margin-top:8px;"></div>
+  `;
+  document.getElementById('objModal').classList.add('open');
+}
+function closeModal() { document.getElementById('objModal').classList.remove('open'); currentObj = null; }
+
+async function doAction(action) {
+  if (!currentObj) return;
+  const remark = document.getElementById('staffRemark')?.value?.trim() || '';
+  if (action === 'remark' && !remark) { showFlash('flash','Remark cannot be empty','error'); return; }
+  try {
+    await StaffAPI.patch(`/api/staff/objection/${currentObj.id}`, { action, staff_remark: remark });
+    closeModal();
+    showFlash('flash', `✅ Objection ${action} successful`, 'success');
+    loadObjections();
+  } catch(e) {
+    showFlash('flash', '❌ ' + e.message, 'error');
+  }
+}
+
+document.getElementById('objModal').addEventListener('click', e => { if(e.target===document.getElementById('objModal')) closeModal(); });
+</script>
+</body>
+</html>

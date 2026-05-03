@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Staff Dashboard – UP Bar Council</title>
+  <link rel="stylesheet" href="/assets/admin.css"/>
+  <style>
+    .activity-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px; }
+    .dot-blue{background:#3b82f6;} .dot-green{background:#16a34a;} .dot-red{background:#dc2626;} .dot-gray{background:#94a3b8;}
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">⚖️</div>
+      <div class="brand-text">
+        <div class="name">UP Bar Council</div>
+        <div class="sub">Staff Portal</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">Navigation</div>
+    <nav>
+      <button class="nav-link active" onclick="location.href='/staff-dashboard'">
+        <span class="nav-icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-link" onclick="location.href='/staff-objections'">
+        <span class="nav-icon">📋</span> Objections
+        <span class="nav-badge" id="sb-obj-count">…</span>
+      </button>
+      <button class="nav-link" onclick="location.href='/staff-uploads'">
+        <span class="nav-icon">📁</span> Upload Review
+        <span class="nav-badge" id="sb-upl-count">…</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-section-label" style="margin-top:auto;">Account</div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" id="avatarLetter">S</div>
+        <div>
+          <div id="staffName" style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div>
+          <div style="font-size:10px;color:#64748b;">Staff Member</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="logoutStaff()">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="top-header">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <span class="page-title">Staff Dashboard</span>
+      <span class="page-subtitle">| अवलोकन</span>
+      <div class="header-spacer"></div>
+      <span id="hdr-date" style="font-size:12px;color:#64748b;"></span>
+    </header>
+
+    <div class="page-body">
+      <div id="flash" class="flash" style="display:none;margin-bottom:14px;"></div>
+
+      <!-- STAT CARDS -->
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card"><div class="stat-info"><div class="label">Pending Objections</div><div class="value" id="s-pobj">…</div><div class="sub">Awaiting resolution</div></div><div class="stat-icon ic-yellow">📋</div></div>
+        <div class="stat-card"><div class="stat-info"><div class="label">Overdue Objections</div><div class="value" id="s-oobj" style="color:#dc2626;">…</div><div class="sub">Deadline passed</div></div><div class="stat-icon ic-red">⚠️</div></div>
+        <div class="stat-card"><div class="stat-info"><div class="label">Documents to Review</div><div class="value" id="s-pupl">…</div><div class="sub">Pending verification</div></div><div class="stat-icon ic-blue">📁</div></div>
+        <div class="stat-card"><div class="stat-info"><div class="label">Completed Today</div><div class="value" id="s-today">…</div><div class="sub">Your actions today</div></div><div class="stat-icon ic-green">✅</div></div>
+      </div>
+
+      <!-- MINI STATS -->
+      <div class="mini-stats" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px;">
+        <div class="mini-stat"><div class="m-val" id="m-approved">…</div><div class="m-label">Uploads Approved</div></div>
+        <div class="mini-stat"><div class="m-val" id="m-rejected">…</div><div class="m-label">Uploads Rejected</div></div>
+        <div class="mini-stat"><div class="m-val" id="m-pending-u">…</div><div class="m-label">Uploads Pending</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <!-- RECENT OBJECTIONS -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📋 Recent Objections</span>
+            <a href="/staff-objections" class="btn btn-outline btn-sm">View All →</a>
+          </div>
+          <div class="panel-body" id="recentObjList">
+            <div class="loading-overlay">⏳</div>
+          </div>
+        </div>
+
+        <!-- RECENT UPLOADS -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📁 Recent Uploads</span>
+            <a href="/staff-uploads" class="btn btn-outline btn-sm">View All →</a>
+          </div>
+          <div class="panel-body" id="recentUplList">
+            <div class="loading-overlay">⏳</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTIVITY LOG -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">
+          <span class="panel-title">🕒 My Recent Activity</span>
+        </div>
+        <div class="panel-body" id="activityList">
+          <div class="loading-overlay">⏳</div>
+        </div>
+      </div>
+
+    </div><!-- page-body -->
+  </div><!-- main-content -->
+</div>
+
+<script src="/assets/main.js"></script>
+<script>
+/* decode JWT without library */
+function decodeJwt(t) {
+  try { return JSON.parse(atob(t.split('.')[1])); } catch(e) { return {}; }
+}
+
+(async function init() {
+  const tok = getPrivToken();
+  if (tok) {
+    const p = decodeJwt(tok);
+    const name = p.username || 'Staff';
+    document.getElementById('staffName').textContent = name;
+    document.getElementById('avatarLetter').textContent = name[0].toUpperCase();
+  }
+  document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+
+  try {
+    const res = await StaffAPI.get('/api/staff/dashboard');
+    const { stats, recent_objections, recent_uploads, recent_logs } = res.data;
+
+    document.getElementById('s-pobj').textContent  = stats.pending_objections;
+    document.getElementById('s-oobj').textContent  = stats.overdue_objections;
+    document.getElementById('s-pupl').textContent  = stats.pending_uploads;
+    document.getElementById('s-today').textContent = stats.completed_today;
+    document.getElementById('m-approved').textContent = stats.approved_uploads;
+    document.getElementById('m-rejected').textContent = stats.rejected_uploads;
+    document.getElementById('m-pending-u').textContent = stats.pending_uploads;
+
+    document.getElementById('sb-obj-count').textContent = stats.pending_objections;
+    document.getElementById('sb-upl-count').textContent = stats.pending_uploads;
+
+    /* Recent objections */
+    const oEl = document.getElementById('recentObjList');
+    if (!recent_objections.length) { oEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No objections yet</p></div>'; }
+    else {
+      oEl.innerHTML = recent_objections.map(o => `
+        <div class="recent-app">
+          <div class="activity-dot ${o.resolved ? 'dot-green' : isOverdue(o.deadline) ? 'dot-red' : 'dot-blue'}"></div>
+          <div style="flex:1;">
+            <div class="recent-name">${escHtml(o.application_no)} — ${escHtml(o.name)}</div>
+            <div class="recent-no">${escHtml(o.type)} &nbsp;|&nbsp; Due: ${fmtDate(o.deadline)}</div>
+          </div>
+          <span class="badge ${o.resolved ? 'badge-approved' : isOverdue(o.deadline) ? 'badge-rejected' : 'badge-pending'}">${o.resolved ? 'Resolved' : isOverdue(o.deadline) ? 'Overdue' : 'Pending'}</span>
+        </div>
+      `).join('');
+    }
+
+    /* Recent uploads */
+    const uEl = document.getElementById('recentUplList');
+    if (!recent_uploads.length) { uEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No uploads yet</p></div>'; }
+    else {
+      uEl.innerHTML = recent_uploads.map(u => `
+        <div class="recent-app">
+          <div class="activity-dot ${u.review_status==='approved'?'dot-green':u.review_status==='rejected'?'dot-red':'dot-blue'}"></div>
+          <div style="flex:1;">
+            <div class="recent-name">${escHtml(u.application_no)} — ${escHtml(u.name)}</div>
+            <div class="recent-no">${escHtml(u.doc_type)} &nbsp;|&nbsp; ${fmtDate(u.uploaded_at)}</div>
+          </div>
+          <span class="badge badge-${u.review_status}">${u.review_status}</span>
+        </div>
+      `).join('');
+    }
+
+    /* Activity log */
+    const aEl = document.getElementById('activityList');
+    if (!recent_logs.length) { aEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🕒</div><p>No activity recorded yet</p></div>'; }
+    else {
+      aEl.innerHTML = recent_logs.map(l => `
+        <div class="log-item">
+          <div class="activity-dot dot-blue"></div>
+          <div class="log-action" style="flex:1;">${escHtml(l.action)}${l.details ? ' — <span class="log-detail">'+escHtml(l.details)+'</span>' : ''}</div>
+          <div class="log-time">${fmtDateTime(l.created_at)}</div>
+        </div>
+      `).join('');
+    }
+
+  } catch(e) {
+    showFlash('flash', '❌ Failed to load dashboard: ' + e.message, 'error');
+  }
+})();
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

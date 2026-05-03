@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Upload Review – UP Bar Council Staff</title>
+  <link rel="stylesheet" href="/assets/admin.css"/>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">⚖️</div>
+      <div class="brand-text">
+        <div class="name">UP Bar Council</div>
+        <div class="sub">Staff Portal</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Navigation</div>
+    <nav>
+      <button class="nav-link" onclick="location.href='/staff-dashboard'"><span class="nav-icon">🏠</span> Dashboard</button>
+      <button class="nav-link" onclick="location.href='/staff-objections'"><span class="nav-icon">📋</span> Objections</button>
+      <button class="nav-link active" onclick="location.href='/staff-uploads'"><span class="nav-icon">📁</span> Upload Review</button>
+    </nav>
+    <div class="sidebar-section-label" style="margin-top:auto;">Account</div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" id="avatarLetter">S</div>
+        <div><div id="staffName" style="color:#e2e8f0;font-size:12px;font-weight:700;">Staff</div><div style="font-size:10px;color:#64748b;">Staff Member</div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:#f87171;" onclick="logoutStaff()">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="top-header">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <span class="page-title">Upload Review</span>
+      <span class="page-subtitle">| दस्तावेज़ सत्यापन</span>
+      <div class="header-spacer"></div>
+      <div class="header-search">
+        <span>🔍</span>
+        <input id="searchInput" placeholder="Search by App No / Name…" oninput="debounceLoad()"/>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div id="flash" class="flash" style="display:none;margin-bottom:14px;"></div>
+
+      <!-- FILTER TABS -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📁 Uploaded Documents</span>
+          <div class="toolbar">
+            <div class="filter-btns">
+              <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+              <button class="filter-btn"        onclick="setFilter('pending',this)">Pending ⏳</button>
+              <button class="filter-btn"        onclick="setFilter('approved',this)" style="color:#16a34a;">Approved ✅</button>
+              <button class="filter-btn"        onclick="setFilter('rejected',this)" style="color:#dc2626;">Rejected ❌</button>
+            </div>
+            <span id="totalCount" style="font-size:12px;color:#64748b;"></span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#ID</th>
+                <th>Application No</th>
+                <th>Candidate</th>
+                <th>Document Type</th>
+                <th>Objection</th>
+                <th>Uploaded</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="uplTable"><tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="uplModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Document Review</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/main.js"></script>
+<script>
+let currentFilter = 'all';
+let currentPage   = 1;
+let currentUpload = null;
+let debounceTimer = null;
+
+function escHtml(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function decodeJwt(t) { try{return JSON.parse(atob(t.split('.')[1]));}catch(e){return{};} }
+
+(function init() {
+  const tok = getPrivToken();
+  if (tok) { const p=decodeJwt(tok); const n=p.username||'Staff'; document.getElementById('staffName').textContent=n; document.getElementById('avatarLetter').textContent=n[0].toUpperCase(); }
+  loadUploads();
+})();
+
+function setFilter(f, el) {
+  currentFilter=f; currentPage=1;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  loadUploads();
+}
+function debounceLoad() { clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>{currentPage=1;loadUploads();},350); }
+
+async function loadUploads() {
+  const search = document.getElementById('searchInput').value.trim();
+  const tbody  = document.getElementById('uplTable');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading-overlay">⏳ Loading…</td></tr>';
+  try {
+    const url = `/api/staff/uploads?filter=${currentFilter}&search=${encodeURIComponent(search)}&page=${currentPage}&limit=20`;
+    const res = await StaffAPI.get(url);
+    const { uploads, total, page, limit } = res.data;
+    document.getElementById('totalCount').textContent = `Total: ${total}`;
+    if (!uploads.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>No uploads found</p></div></td></tr>';
+      renderPagination(total,page,limit); return;
+    }
+    tbody.innerHTML = uploads.map(u => `
+      <tr>
+        <td><b>#${u.id}</b></td>
+        <td><code>${escHtml(u.application_no)}</code></td>
+        <td class="truncate">${escHtml(u.name)}</td>
+        <td>${escHtml(u.doc_type)}</td>
+        <td style="font-size:11px;color:#64748b;">${escHtml(u.objection_type||'—')}</td>
+        <td style="font-size:11px;">${fmtDate(u.uploaded_at)}</td>
+        <td><span class="badge badge-${u.review_status}">${u.review_status}</span></td>
+        <td>
+          <button class="btn btn-outline btn-xs" onclick='openModal(${JSON.stringify(u).replace(/'/g,"&#39;")})'>👁 Review</button>
+        </td>
+      </tr>
+    `).join('');
+    renderPagination(total, page, limit);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="alert alert-error">❌ ${escHtml(e.message)}</div></td></tr>`;
+  }
+}
+
+function renderPagination(total, page, limit) {
+  const pages = Math.ceil(total/limit);
+  const el = document.getElementById('pagination');
+  if (pages<=1) { el.innerHTML=''; return; }
+  let html = `<button class="page-btn" ${page<=1?'disabled':''} onclick="goPage(${page-1})">‹</button>`;
+  for (let i=1;i<=pages;i++) {
+    if(i===1||i===pages||Math.abs(i-page)<=1) html+=`<button class="page-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    else if(Math.abs(i-page)===2) html+=`<span style="padding:0 4px;color:#94a3b8;">…</span>`;
+  }
+  html += `<button class="page-btn" ${page>=pages?'disabled':''} onclick="goPage(${page+1})">›</button>`;
+  el.innerHTML = html;
+}
+function goPage(p) { currentPage=p; loadUploads(); }
+
+function openModal(u) {
+  currentUpload = u;
+  const isPending  = u.review_status === 'pending';
+  document.getElementById('modalTitle').textContent = `Document Review — #${u.id} (${u.application_no})`;
+
+  const fileExt = (u.file_name||'').split('.').pop().toLowerCase();
+  const isImg   = ['jpg','jpeg','png','gif','webp'].includes(fileExt);
+  const fileUrl = `/uploads/verified/${u.file_name}`;
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-grid" style="margin-bottom:14px;">
+      <div class="detail-row"><span class="detail-key">Application No</span><span class="detail-val"><code>${escHtml(u.application_no)}</code></span></div>
+      <div class="detail-row"><span class="detail-key">Candidate</span><span class="detail-val">${escHtml(u.name)}</span></div>
+      <div class="detail-row"><span class="detail-key">District</span><span class="detail-val">${escHtml(u.district||'—')}</span></div>
+      <div class="detail-row"><span class="detail-key">Document Type</span><span class="detail-val">${escHtml(u.doc_type)}</span></div>
+      <div class="detail-row"><span class="detail-key">Section</span><span class="detail-val">${escHtml(u.section_code)}</span></div>
+      <div class="detail-row"><span class="detail-key">Objection Type</span><span class="detail-val">${escHtml(u.objection_type||'—')}</span></div>
+      <div class="detail-row"><span class="detail-key">Uploaded</span><span class="detail-val">${fmtDateTime(u.uploaded_at)}</span></div>
+      <div class="detail-row"><span class="detail-key">Review Status</span><span class="detail-val"><span class="badge badge-${u.review_status}">${u.review_status}</span></span></div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div class="form-label">File: ${escHtml(u.original_name)}</div>
+      ${isImg
+        ? `<img src="${fileUrl}" alt="document" style="max-width:100%;border-radius:6px;border:1px solid #e2e8f0;" onerror="this.style.display='none';document.getElementById('noPreview').style.display='block'"/>
+           <div id="noPreview" style="display:none;" class="alert alert-info">Preview not available — <a href="${fileUrl}" target="_blank" style="color:#1e40af;">Open file ↗</a></div>`
+        : `<div class="alert alert-info">📄 <a href="${fileUrl}" target="_blank" style="color:#1e40af;font-weight:700;">Download / Preview Document ↗</a></div>`
+      }
+    </div>
+
+    ${u.staff_remark ? `<div style="margin-bottom:14px;"><div class="form-label">Previous Remark</div><div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px 12px;font-size:13px;">${escHtml(u.staff_remark)}</div></div>` : ''}
+
+    <div class="form-group">
+      <label class="form-label" for="remarkInput">Staff Remark <span id="remarkRequired" style="color:#dc2626;${isPending?'':'display:none;'}">* (required for rejection)</span></label>
+      <textarea class="form-textarea" id="remarkInput" rows="3" placeholder="Add a note, reason for rejection, or approval comment…">${escHtml(u.staff_remark||'')}</textarea>
+    </div>
+    <div id="modalFlash" class="flash" style="display:none;"></div>
+  `;
+
+  const footer = document.getElementById('modalFooter');
+  footer.innerHTML = `<button class="btn btn-outline" onclick="closeModal()">Cancel</button>`;
+  if (isPending) {
+    footer.innerHTML += `
+      <button class="btn btn-danger btn-sm" onclick="doAction('reject')">❌ Reject</button>
+      <button class="btn btn-success btn-sm" onclick="doAction('approve')">✅ Approve</button>
+    `;
+  } else {
+    footer.innerHTML += `<button class="btn btn-outline btn-sm" onclick="doAction('remark')">💬 Update Remark</button>`;
+  }
+
+  document.getElementById('uplModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('uplModal').classList.remove('open'); currentUpload=null; }
+
+async function doAction(action) {
+  if (!currentUpload) return;
+  const remark = document.getElementById('remarkInput')?.value?.trim() || '';
+  if (action === 'reject' && !remark) {
+    document.getElementById('modalFlash').textContent = '❌ Rejection reason is required';
+    document.getElementById('modalFlash').className   = 'flash flash-error';
+    document.getElementById('modalFlash').style.display = 'block';
+    return;
+  }
+  try {
+    await StaffAPI.patch(`/api/staff/upload/${currentUpload.id}`, { action, staff_remark: remark });
+    closeModal();
+    showFlash('flash', `✅ Document ${action}d successfully`, 'success');
+    loadUploads();
+  } catch(e) {
+    showFlash('flash', '❌ ' + e.message, 'error');
+  }
+}
+
+document.getElementById('uplModal').addEventListener('click', e => { if(e.target===document.getElementById('uplModal'))closeModal(); });
+</script>
+</body>
+</html>

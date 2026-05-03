@@ -6,14 +6,12 @@ const { logAction } = require('../utils/logger');
 
 async function uploadExcelApplications(req, res) {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Excel file required' });
+    if (!req.file) return res.status(400).json({ success: false, message: 'Excel file required', data: null });
     const workbook = XLSX.readFile(req.file.path);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
     let inserted = 0;
     const errors = [];
-
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       const application_no = String(r.application_no || '').trim();
@@ -21,60 +19,41 @@ async function uploadExcelApplications(req, res) {
       const father_name = String(r.father_name || '').trim();
       const mobile = String(r.mobile || '').trim();
       const district = String(r.district || '').trim();
-
       if (!application_no && !name && !father_name && !mobile && !district) continue;
       if (!validateApplicationNo(application_no)) { errors.push({ row: i + 2, error: 'invalid application_no' }); continue; }
       if (!validateMobile(mobile)) { errors.push({ row: i + 2, error: 'invalid mobile' }); continue; }
       if (!name || !father_name || !district) { errors.push({ row: i + 2, error: 'missing fields' }); continue; }
-
       const dup = await pool.query('SELECT id FROM applications WHERE application_no=$1', [application_no]);
       if (dup.rows.length) { errors.push({ row: i + 2, error: 'duplicate application_no' }); continue; }
-
-      await pool.query(
-        'INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)',
-        [application_no, name, father_name, mobile, district]
-      );
-      inserted += 1;
+      await pool.query('INSERT INTO applications(application_no,name,father_name,mobile,district) VALUES($1,$2,$3,$4,$5)', [application_no, name, father_name, mobile, district]);
+      inserted++;
     }
-
     await logAction(req.user.username, 'admin', 'excel_upload', `inserted=${inserted}, errors=${errors.length}`);
-    res.json({ inserted, errors });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json({ success: true, message: `Inserted ${inserted} records`, data: { inserted, errors } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
 async function overrideUpload(req, res) {
   const { application_no, upload_enabled, grant_final_chance } = req.body;
   try {
     if (grant_final_chance) {
-      await pool.query(
-        'UPDATE applications SET upload_enabled=$1, final_chance_used=0, reopen_count=reopen_count+1 WHERE application_no=$2',
-        [upload_enabled ? 1 : 0, application_no]
-      );
+      await pool.query('UPDATE applications SET upload_enabled=$1, final_chance_used=0, reopen_count=reopen_count+1 WHERE application_no=$2', [upload_enabled ? 1 : 0, application_no]);
     } else {
-      await pool.query(
-        'UPDATE applications SET upload_enabled=$1, reopen_count=reopen_count+1 WHERE application_no=$2',
-        [upload_enabled ? 1 : 0, application_no]
-      );
+      await pool.query('UPDATE applications SET upload_enabled=$1, reopen_count=reopen_count+1 WHERE application_no=$2', [upload_enabled ? 1 : 0, application_no]);
     }
     await logAction(req.user.username, 'admin', 'override_upload', JSON.stringify(req.body));
     res.json({ success: true, message: 'Override updated', data: null });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
 async function runManualBackup(req, res) {
   try {
     const { type } = req.body;
-    if (!['objection', 'upload', 'full'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+    if (!['objection', 'upload', 'full'].includes(type)) return res.status(400).json({ success: false, message: 'Invalid type', data: null });
     const filePath = await runBackup(type);
     await logAction(req.user.username, 'admin', 'manual_backup', type);
-    res.json({ filePath });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json({ success: true, message: 'Backup created', data: { filePath } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
 async function restoreManualBackup(req, res) {
@@ -82,22 +61,190 @@ async function restoreManualBackup(req, res) {
     const { file_path } = req.body;
     await restoreBackup(file_path);
     await logAction(req.user.username, 'admin', 'restore_backup', file_path);
-    res.json({ message: 'Restore completed' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json({ success: true, message: 'Restore completed', data: null });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
 async function approveDuplicate(req, res) {
   try {
     const { id, issue_code } = req.body;
-    if (!['D1', 'D2'].includes(issue_code)) return res.status(400).json({ error: 'Invalid issue code' });
+    if (!['D1', 'D2'].includes(issue_code)) return res.status(400).json({ success: false, message: 'Invalid issue code', data: null });
     await pool.query('UPDATE duplicate_requests SET status=$1, issue_code=$2 WHERE id=$3', ['approved', issue_code, id]);
     await logAction(req.user.username, 'admin', 'approve_duplicate', `id=${id},${issue_code}`);
-    res.json({ message: 'Duplicate approved' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json({ success: true, message: 'Duplicate approved', data: null });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
 }
 
-module.exports = { uploadExcelApplications, overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate };
+async function getStats(req, res) {
+  try {
+    const total = await pool.query('SELECT COUNT(*) FROM applications');
+    const approved = await pool.query("SELECT COUNT(*) FROM applications WHERE status='approved'");
+    const pending = await pool.query("SELECT COUNT(*) FROM applications WHERE status='pending'");
+    const rejected = await pool.query("SELECT COUNT(*) FROM applications WHERE status='rejected'");
+    const objection = await pool.query("SELECT COUNT(*) FROM applications WHERE status='objection'");
+    const under_review = await pool.query("SELECT COUNT(*) FROM applications WHERE status='under_review'");
+    const staff = await pool.query("SELECT COUNT(*) FROM users WHERE role IN ('admin','staff') AND active=1");
+    const today_logs = await pool.query("SELECT COUNT(*) FROM action_logs WHERE created_at >= CURRENT_DATE");
+    const pending_dups = await pool.query("SELECT COUNT(*) FROM duplicate_requests WHERE status='pending'");
+
+    const by_district = await pool.query('SELECT district, COUNT(*) as count FROM applications GROUP BY district ORDER BY count DESC LIMIT 8');
+    const by_status = await pool.query('SELECT status, COUNT(*) as count FROM applications GROUP BY status');
+    const recent = await pool.query('SELECT application_no, name, status, created_at FROM applications ORDER BY created_at DESC LIMIT 5');
+
+    res.json({
+      success: true,
+      data: {
+        total: parseInt(total.rows[0].count),
+        approved: parseInt(approved.rows[0].count),
+        pending: parseInt(pending.rows[0].count),
+        rejected: parseInt(rejected.rows[0].count),
+        objection: parseInt(objection.rows[0].count),
+        under_review: parseInt(under_review.rows[0].count),
+        active_staff: parseInt(staff.rows[0].count),
+        today_actions: parseInt(today_logs.rows[0].count),
+        pending_duplicates: parseInt(pending_dups.rows[0].count),
+        by_district: by_district.rows,
+        by_status: by_status.rows,
+        recent_applications: recent.rows
+      }
+    });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function getApplications(req, res) {
+  try {
+    const { status, search, page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    let where = [];
+    let params = [];
+    let idx = 1;
+    if (status && status !== 'all') { where.push(`status=$${idx++}`); params.push(status); }
+    if (search) {
+      where.push(`(application_no ILIKE $${idx} OR name ILIKE $${idx} OR mobile ILIKE $${idx})`);
+      params.push('%' + search + '%'); idx++;
+    }
+    const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const countRes = await pool.query(`SELECT COUNT(*) FROM applications ${whereClause}`, params);
+    const rows = await pool.query(
+      `SELECT a.*, (SELECT COUNT(*) FROM objections o WHERE o.application_id=a.id) as objection_count,
+       (SELECT COUNT(*) FROM certificates c WHERE c.application_id=a.id) as cert_count
+       FROM applications a ${whereClause} ORDER BY a.created_at DESC LIMIT $${idx} OFFSET $${idx+1}`,
+      [...params, parseInt(limit), offset]
+    );
+    res.json({ success: true, data: { applications: rows.rows, total: parseInt(countRes.rows[0].count), page: parseInt(page), limit: parseInt(limit) } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function getApplicationById(req, res) {
+  try {
+    const { id } = req.params;
+    const app = await pool.query('SELECT * FROM applications WHERE id=$1', [id]);
+    if (!app.rows.length) return res.status(404).json({ success: false, message: 'Not found', data: null });
+    const objections = await pool.query('SELECT * FROM objections WHERE application_id=$1 ORDER BY id DESC', [id]);
+    const uploads = await pool.query('SELECT * FROM uploads WHERE application_id=$1 ORDER BY id DESC', [id]);
+    const certs = await pool.query('SELECT * FROM certificates WHERE application_id=$1', [id]);
+    res.json({ success: true, data: { application: app.rows[0], objections: objections.rows, uploads: uploads.rows, certificates: certs.rows } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function updateApplicationStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const allowed = ['pending', 'objection', 'under_review', 'approved', 'rejected'];
+    if (!allowed.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status', data: null });
+    await pool.query('UPDATE applications SET status=$1 WHERE id=$2', [status, id]);
+    await logAction(req.user.username, req.user.role, 'update_status', `id=${id} → ${status}`);
+    res.json({ success: true, message: `Status updated to ${status}`, data: null });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function getStaff(req, res) {
+  try {
+    const rows = await pool.query("SELECT id, username, role, active, created_at FROM users WHERE role IN ('admin','staff') ORDER BY created_at DESC");
+    res.json({ success: true, data: rows.rows });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function addStaff(req, res) {
+  try {
+    const { username, password, role } = req.body;
+    if (!username || !password || !['admin', 'staff'].includes(role)) return res.status(400).json({ success: false, message: 'username, password, role required', data: null });
+    const existing = await pool.query('SELECT id FROM users WHERE username=$1', [username]);
+    if (existing.rows.length) return res.status(409).json({ success: false, message: 'Username already exists', data: null });
+    await pool.query('INSERT INTO users(username,password,role,active) VALUES($1,$2,$3,1)', [username, password, role]);
+    await logAction(req.user.username, 'admin', 'add_staff', `${username} (${role})`);
+    res.json({ success: true, message: 'Staff member added', data: null });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function toggleStaff(req, res) {
+  try {
+    const { id } = req.params;
+    const cur = await pool.query('SELECT active, username FROM users WHERE id=$1', [id]);
+    if (!cur.rows.length) return res.status(404).json({ success: false, message: 'User not found', data: null });
+    const newActive = cur.rows[0].active ? 0 : 1;
+    await pool.query('UPDATE users SET active=$1 WHERE id=$2', [newActive, id]);
+    await logAction(req.user.username, 'admin', newActive ? 'enable_staff' : 'disable_staff', cur.rows[0].username);
+    res.json({ success: true, message: `Staff ${newActive ? 'enabled' : 'disabled'}`, data: { active: newActive } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function getLogs(req, res) {
+  try {
+    const { page = 1, limit = 50, search } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    let where = [], params = [], idx = 1;
+    if (search) { where.push(`(actor ILIKE $${idx} OR action ILIKE $${idx})`); params.push('%' + search + '%'); idx++; }
+    const wc = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const total = await pool.query(`SELECT COUNT(*) FROM action_logs ${wc}`, params);
+    const rows = await pool.query(`SELECT * FROM action_logs ${wc} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]);
+    res.json({ success: true, data: { logs: rows.rows, total: parseInt(total.rows[0].count) } });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function getAlerts(req, res) {
+  try {
+    const pending_apps = await pool.query("SELECT COUNT(*) FROM applications WHERE status='pending'");
+    const pending_dups = await pool.query("SELECT COUNT(*) FROM duplicate_requests WHERE status='pending'");
+    const unresolved_obj = await pool.query('SELECT COUNT(*) FROM objections WHERE resolved=0');
+    const expired_otps = await pool.query("SELECT COUNT(*) FROM otp_codes WHERE expires_at < NOW() AND used=0");
+    const unverified_uploads = await pool.query('SELECT COUNT(*) FROM uploads WHERE verified=0');
+    const overdue_obj = await pool.query("SELECT a.application_no, a.name, o.type, o.deadline FROM objections o JOIN applications a ON a.id=o.application_id WHERE o.resolved=0 AND o.deadline < NOW() LIMIT 10");
+    const recent_pending = await pool.query("SELECT application_no, name, created_at FROM applications WHERE status='pending' ORDER BY created_at ASC LIMIT 5");
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          pending_applications: parseInt(pending_apps.rows[0].count),
+          pending_duplicates: parseInt(pending_dups.rows[0].count),
+          unresolved_objections: parseInt(unresolved_obj.rows[0].count),
+          unverified_uploads: parseInt(unverified_uploads.rows[0].count),
+          expired_otps: parseInt(expired_otps.rows[0].count)
+        },
+        overdue_objections: overdue_obj.rows,
+        oldest_pending: recent_pending.rows
+      }
+    });
+  } catch (error) { res.status(500).json({ success: false, message: error.message, data: null }); }
+}
+
+async function adminLogin(req, res, next) {
+  try {
+    const jwt = require('jsonwebtoken');
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ success: false, message: 'Username and password required', data: null });
+    const users = await pool.query("SELECT * FROM users WHERE username=$1 AND password=$2 AND role IN ('admin','staff') AND active=1", [username, password]);
+    if (!users.rows.length) return res.status(401).json({ success: false, message: 'Invalid credentials or account disabled', data: null });
+    const user = users.rows[0];
+    const token = jwt.sign({ id: user.id, role: user.role, username: user.username }, process.env.JWT_SECRET, { expiresIn: '8h' });
+    await logAction(user.username, user.role, 'admin_login');
+    return res.json({ success: true, message: 'Login successful', data: { token, role: user.role, username: user.username } });
+  } catch (error) { next(error); }
+}
+
+module.exports = {
+  uploadExcelApplications, overrideUpload, runManualBackup, restoreManualBackup, approveDuplicate,
+  getStats, getApplications, getApplicationById, updateApplicationStatus,
+  getStaff, addStaff, toggleStaff, getLogs, getAlerts, adminLogin
+};
