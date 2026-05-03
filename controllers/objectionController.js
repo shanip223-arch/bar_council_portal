@@ -4,16 +4,16 @@ const { logAction } = require('../utils/logger');
 async function addObjection(req, res) {
   const { application_no, type, remark } = req.body;
   try {
-    const apps = await pool.query('SELECT * FROM applications WHERE application_no=$1', [application_no]);
+    const apps = await pool.query('SELECT * FROM applications WHERE application_no=?', [application_no]);
     if (!apps.rows.length) return res.status(404).json({ error: 'Application not found' });
 
     const app = apps.rows[0];
     const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await pool.query(
-      'INSERT INTO objections(application_id,type,remark,deadline,created_by) VALUES($1,$2,$3,$4,$5)',
+      'INSERT INTO objections(application_id,type,remark,deadline,created_by) VALUES(?,?,?,?,?)',
       [app.id, type, remark, deadline, req.user.id]
     );
-    await pool.query('UPDATE applications SET status=$1 WHERE id=$2', ['objection', app.id]);
+    await pool.query('UPDATE applications SET status=? WHERE id=?', ['objection', app.id]);
     await logAction(req.user.username, req.user.role, 'add_objection', `${application_no}:${type}`);
     res.json({ message: 'Objection created', deadline });
   } catch (error) {
@@ -27,7 +27,7 @@ async function listObjections(req, res) {
     const result = await pool.query(
       `SELECT o.* FROM objections o
        JOIN applications a ON a.id=o.application_id
-       WHERE a.application_no=$1 ORDER BY o.id DESC`,
+       WHERE a.application_no=? ORDER BY o.id DESC`,
       [application_no]
     );
     res.json(result.rows);
@@ -39,7 +39,7 @@ async function listObjections(req, res) {
 async function resolveObjection(req, res) {
   const { objection_id } = req.body;
   try {
-    await pool.query('UPDATE objections SET resolved=1 WHERE id=$1', [objection_id]);
+    await pool.query('UPDATE objections SET resolved=1 WHERE id=?', [objection_id]);
     await logAction(req.user.username, req.user.role, 'resolve_objection', `id=${objection_id}`);
     res.json({ message: 'Marked resolved' });
   } catch (error) {
@@ -53,14 +53,14 @@ async function listAllObjections(req, res) {
   try {
     const vals = [];
     const where = [];
-    let i = 1;
+
     if (search) {
-      where.push(`(a.application_no ILIKE $${i} OR a.name ILIKE $${i})`);
-      vals.push('%' + search + '%');
-      i++;
+      where.push(`(a.application_no LIKE ? OR a.name LIKE ?)`);
+      vals.push('%' + search + '%', '%' + search + '%');
     }
-    if (status === 'resolved')   where.push('o.resolved = true');
-    if (status === 'unresolved') where.push('(o.resolved = false OR o.resolved IS NULL)');
+    if (status === 'resolved')   where.push('o.resolved = 1');
+    if (status === 'unresolved') where.push('(o.resolved = 0 OR o.resolved IS NULL)');
+
     const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
     const countRes = await pool.query(
       `SELECT COUNT(*) FROM objections o JOIN applications a ON a.id=o.application_id ${whereStr}`,
@@ -73,7 +73,7 @@ async function listAllObjections(req, res) {
        JOIN applications a ON a.id=o.application_id
        ${whereStr}
        ORDER BY o.id DESC
-       LIMIT $${i} OFFSET $${i + 1}`,
+       LIMIT ? OFFSET ?`,
       [...vals, parseInt(limit), offset]
     );
     res.json({

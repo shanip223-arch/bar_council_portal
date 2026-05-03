@@ -10,7 +10,7 @@ async function login(req, res, next) {
 
     if (application_no) {
       if (!validateApplicationNo(application_no)) return res.status(400).json({ success: false, message: 'Invalid application number format', data: null });
-      const apps = await pool.query('SELECT * FROM applications WHERE application_no=$1', [application_no]);
+      const apps = await pool.query('SELECT * FROM applications WHERE application_no=?', [application_no]);
       if (!apps.rows.length) return res.status(404).json({ success: false, message: 'Application not found', data: null });
       await sendOtp(application_no);
       await logAction(application_no, 'candidate', 'otp_requested');
@@ -18,7 +18,7 @@ async function login(req, res, next) {
     }
 
     if (!username || !password) return res.status(400).json({ success: false, message: 'Username and password required', data: null });
-    const users = await pool.query('SELECT * FROM users WHERE username=$1 AND password=$2', [username, password]);
+    const users = await pool.query('SELECT * FROM users WHERE username=? AND password=?', [username, password]);
     if (!users.rows.length) return res.status(401).json({ success: false, message: 'Invalid credentials', data: null });
 
     const user = users.rows[0];

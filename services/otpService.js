@@ -6,7 +6,7 @@ async function sendOtp(applicationNo) {
   const otp = String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
   await pool.query(
-    'INSERT INTO otp_codes(application_no, otp, expires_at) VALUES($1,$2,$3)',
+    'INSERT INTO otp_codes(application_no, otp, expires_at) VALUES(?,?,?)',
     [applicationNo, otp, expiresAt]
   );
 
@@ -21,13 +21,13 @@ async function sendOtp(applicationNo) {
 async function verifyOtp(applicationNo, otp) {
   const result = await pool.query(
     `SELECT * FROM otp_codes
-     WHERE application_no=$1 AND otp=$2 AND used=0 AND expires_at > NOW()
+     WHERE application_no=? AND otp=? AND used=0 AND expires_at > NOW()
      ORDER BY id DESC LIMIT 1`,
     [applicationNo, otp]
   );
   if (!result.rows.length) return false;
 
-  await pool.query('UPDATE otp_codes SET used=1 WHERE id=$1', [result.rows[0].id]);
+  await pool.query('UPDATE otp_codes SET used=1 WHERE id=?', [result.rows[0].id]);
   return true;
 }
 

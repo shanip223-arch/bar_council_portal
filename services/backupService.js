@@ -21,7 +21,7 @@ async function runBackup(type) {
 
   const filePath = path.join('backups', `${type}_${ts()}.json`);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  await pool.query('INSERT INTO backup_logs(backup_type,file_path) VALUES($1,$2)', [type, filePath]);
+  await pool.query('INSERT INTO backup_logs(backup_type,file_path) VALUES(?,?)', [type, filePath]);
   return filePath;
 }
 
@@ -35,7 +35,7 @@ async function restoreBackup(filePath) {
     for (const row of rows) {
       const cols = Object.keys(row);
       const vals = Object.values(row);
-      const placeholders = cols.map((_, i) => `$${i + 1}`).join(',');
+      const placeholders = cols.map(() => '?').join(',');
       await pool.query(
         `INSERT INTO ${table}(${cols.join(',')}) VALUES(${placeholders})`,
         vals
