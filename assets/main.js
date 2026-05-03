@@ -308,3 +308,13 @@ async function updateObjectionStatus(id, action, staff_remark) {
 async function updateUploadStatus(id, action, staff_remark) {
   return StaffAPI.patch(`/api/staff/upload/${id}`, { action, staff_remark: staff_remark || '' });
 }
+
+// ── Admin dashboard section navigation ──────────────────────
+function adminNavInit() {
+  document.querySelectorAll('[data-section]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (typeof showSection === 'function') showSection(this.dataset.section);
+    });
+  });
+}

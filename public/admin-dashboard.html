@@ -24,8 +24,8 @@
 .role-admin { background:#ede9fe; color:#5b21b6; }
 .role-staff { background:#ccfbf1; color:#134e4a; }
 /* ── section visibility ── */
-.dash-section { display:none; }
-.dash-section.visible { display:block; }
+.admin-section { display:none; }
+.admin-section.active { display:block; }
 /* ── page inner padding ── */
 .page-body { flex:1; padding:20px; overflow-y:auto; }
 /* ── alert summary boxes ── */
@@ -62,26 +62,26 @@
 
   <div class="sidebar-section-label">Main Menu</div>
   <nav>
-    <button class="nav-link active" id="snav-dashboard"    onclick="showSection('dashboard')">
+    <a class="nav-link active" id="snav-dashboard"    data-section="dashboard" href="#">
       <span class="nav-icon">📊</span> Dashboard
-    </button>
-    <button class="nav-link" id="snav-applications" onclick="showSection('applications')">
+    </a>
+    <a class="nav-link" id="snav-applications" data-section="applications" href="#">
       <span class="nav-icon">📋</span> Applications
       <span class="nav-badge" id="nav-badge-pending" style="display:none;">0</span>
-    </button>
-    <button class="nav-link" id="snav-alerts"  onclick="showSection('alerts')">
+    </a>
+    <a class="nav-link" id="snav-alerts"  data-section="alerts" href="#">
       <span class="nav-icon">🚨</span> Alerts
       <span class="nav-badge" id="nav-badge-alerts" style="display:none;">!</span>
-    </button>
-    <button class="nav-link" id="snav-staff"   onclick="showSection('staff')">
+    </a>
+    <a class="nav-link" id="snav-staff"   data-section="staff" href="#">
       <span class="nav-icon">👥</span> Staff
-    </button>
-    <button class="nav-link" id="snav-logs"    onclick="showSection('logs')">
+    </a>
+    <a class="nav-link" id="snav-logs"    data-section="logs" href="#">
       <span class="nav-icon">🕒</span> Activity Logs
-    </button>
-    <button class="nav-link" id="snav-settings" onclick="showSection('settings')">
+    </a>
+    <a class="nav-link" id="snav-settings" data-section="settings" href="#">
       <span class="nav-icon">⚙️</span> Settings
-    </button>
+    </a>
   </nav>
 
   <div style="flex:1;"></div>
@@ -120,7 +120,7 @@
   </header>
 
   <!-- ── DASHBOARD SECTION ──────────────────────────────── -->
-  <div class="page-body dash-section visible" id="section-dashboard">
+  <div class="page-body admin-section active" id="dashboard">
 
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
       <div class="stat-card">
@@ -223,7 +223,7 @@
   </div><!-- /dashboard -->
 
   <!-- ── APPLICATIONS SECTION ──────────────────────────── -->
-  <div class="page-body dash-section" id="section-applications">
+  <div class="page-body admin-section" id="applications">
     <div class="panel">
       <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
         <span class="panel-title">📋 All Applications</span>
@@ -258,7 +258,7 @@
   </div>
 
   <!-- ── ALERTS SECTION ─────────────────────────────────── -->
-  <div class="page-body dash-section" id="section-alerts">
+  <div class="page-body admin-section" id="alerts">
     <!-- Summary boxes -->
     <div class="alert-summary-grid">
       <div class="alert-sum-box">
@@ -312,7 +312,7 @@
   </div>
 
   <!-- ── STAFF SECTION ──────────────────────────────────── -->
-  <div class="page-body dash-section" id="section-staff">
+  <div class="page-body admin-section" id="staff">
     <div class="panel" style="margin-bottom:16px;">
       <div class="panel-header">
         <span class="panel-title">👥 Staff Members</span>
@@ -328,7 +328,7 @@
   </div>
 
   <!-- ── LOGS SECTION ───────────────────────────────────── -->
-  <div class="page-body dash-section" id="section-logs">
+  <div class="page-body admin-section" id="logs">
     <div class="panel">
       <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
         <span class="panel-title">🕒 Activity Logs</span>
@@ -350,7 +350,7 @@
   </div>
 
   <!-- ── SETTINGS SECTION ───────────────────────────────── -->
-  <div class="page-body dash-section" id="section-settings">
+  <div class="page-body admin-section" id="settings">
     <div class="panel" style="max-width:720px;margin-bottom:16px;">
       <div class="panel-header"><span class="panel-title">🔒 Override Upload Access</span></div>
       <div class="panel-body">
@@ -530,7 +530,7 @@ function closeSidebar() {
 const ALL_SECTIONS = ['dashboard','applications','alerts','staff','logs','settings'];
 function showSection(id) {
   ALL_SECTIONS.forEach(s => {
-    document.getElementById('section-'+s).classList.toggle('visible', s === id);
+    document.getElementById(s).classList.toggle('active', s === id);
     const nav = document.getElementById('snav-'+s);
     if (nav) nav.classList.toggle('active', s === id);
   });
@@ -647,7 +647,7 @@ function appSearch() {
 }
 function setAppFilter(f, el) {
   AD.appFilter = f; AD.appPage = 1;
-  document.querySelectorAll('#section-applications .filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#applications .filter-btn').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   loadApplications();
 }
@@ -1019,6 +1019,9 @@ async function doBackup() {
     document.getElementById('sideAvatar').textContent = name[0].toUpperCase();
     document.getElementById('hdrSubtitle').textContent = '| Logged in as ' + name;
   }
+
+  // Wire sidebar [data-section] links (defined in assets/main.js)
+  adminNavInit();
 
   // Load dashboard immediately — this is the visible-by-default section
   loadDashboard();
