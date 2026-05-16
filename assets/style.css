@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; background: #f4f6fb; margin: 0; }
+.container { max-width: 900px; margin: 20px auto; padding: 20px; }
+.card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+input, select, button { width: 100%; padding: 10px; margin: 6px 0; box-sizing: border-box; }
+button { background: #1f4ba8; border: none; color: white; cursor: pointer; border-radius: 4px; }
+button:hover { background: #163b84; }
+pre { background: #0f172a; color: #cbd5e1; padding: 10px; border-radius: 6px; overflow: auto; }
+a { color: #1f4ba8; }

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+<div class="container">
+  <h1>Admin/Staff Panel</h1>
+
+  <section class="card">
+    <h2>Import Excel (Admin)</h2>
+    <input type="file" id="excelFile" />
+    <button onclick="importExcel()">Upload Excel</button>
+  </section>
+
+  <section class="card">
+    <h2>Add Objection</h2>
+    <input id="objAppNo" placeholder="Application No" />
+    <input id="objType" placeholder="Type" />
+    <input id="objRemark" placeholder="Remark" />
+    <button onclick="addObjection()">Add Objection</button>
+  </section>
+
+  <section class="card">
+    <h2>Verify Upload</h2>
+    <input id="uploadId" placeholder="Upload ID" />
+    <button onclick="verifyUpload(true)">Approve</button>
+    <button onclick="verifyUpload(false)">Reject</button>
+  </section>
+
+  <section class="card">
+    <h2>Upload Certificate (Admin)</h2>
+    <input id="certAppNo" placeholder="Application No" />
+    <input type="file" id="certFile" />
+    <button onclick="uploadCertificate()">Upload</button>
+  </section>
+
+  <section class="card">
+    <h2>Overrides (Admin)</h2>
+    <input id="ovAppNo" placeholder="Application No" />
+    <select id="ovAction">
+      <option value="extra_chance">extra_chance</option>
+      <option value="disable_upload">disable_upload</option>
+      <option value="enable_upload">enable_upload</option>
+      <option value="reopen_case">reopen_case</option>
+    </select>
+    <button onclick="overrideCase()">Apply Override</button>
+  </section>
+
+  <p id="adminPanelMsg"></p>
+</div>
+<script src="/assets/app.js"></script>
+</body>
+</html>
